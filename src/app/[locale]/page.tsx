@@ -126,8 +126,8 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
               const items = (isAr ? highlights.ar : highlights.en) ?? [];
               return (
                 <Card key={plan.id} className={plan.isPopular ? 'relative border-primary shadow-lg' : 'relative'}>
+                  {/* Physical centring works identically in both directions. */}
                   {plan.isPopular ? (
-                    {/* Physical centring works identically in both directions. */}
                     <Badge className="absolute -top-3 left-1/2 -translate-x-1/2">
                       {tPlans('mostPopular')}
                     </Badge>
