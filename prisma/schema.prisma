@@ -1,0 +1,1190 @@
+// CoachMate — SaaS platform for personal trainers and their trainees.
+//
+// Tenancy model: every operational row carries `trainerId`. Access is enforced
+// in three layers: (1) explicit guards in src/lib/authz.ts on every server
+// action, (2) a Prisma client extension that injects the tenant filter, and
+// (3) PostgreSQL RLS policies (phase 10).
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ───────────────────────────────────────────────────────────── enums ──────
+
+enum Role {
+  ADMIN
+  TRAINER
+  TRAINEE
+}
+
+enum UserStatus {
+  ACTIVE
+  SUSPENDED
+  PENDING
+}
+
+enum Gender {
+  MALE
+  FEMALE
+}
+
+enum TrainsGenders {
+  MALE
+  FEMALE
+  BOTH
+}
+
+enum ApprovalStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum Specialty {
+  GENERAL_FITNESS
+  WEIGHT_LOSS
+  MUSCLE_GAIN
+  BODYBUILDING
+  POWERLIFTING
+  CROSSFIT
+  CALISTHENICS
+  ENDURANCE
+  REHAB
+  POSTURE
+  PRE_POSTNATAL
+  KIDS
+  SENIORS
+  NUTRITION
+  YOGA
+  PILATES
+  MARTIAL_ARTS
+  SPORTS_PERFORMANCE
+}
+
+enum BillingInterval {
+  MONTHLY
+  QUARTERLY
+  YEARLY
+}
+
+enum SubscriptionStatus {
+  TRIALING
+  PENDING_PAYMENT
+  PENDING_REVIEW
+  ACTIVE
+  EXPIRED
+  CANCELED
+  SUSPENDED
+}
+
+enum PaymentStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  REFUNDED
+}
+
+enum PaymentMethod {
+  MANUAL_TRANSFER
+  INSTAPAY
+  VODAFONE_CASH
+  BANK_TRANSFER
+  CASH
+  KASHIER
+  ZIINA
+}
+
+enum CouponType {
+  PERCENT
+  FIXED
+}
+
+enum CostKind {
+  AI
+  STORAGE
+  GATEWAY
+  OTHER
+}
+
+enum FlagType {
+  BOOLEAN
+  LIMIT
+}
+
+enum TraineeStatus {
+  ACTIVE
+  PAUSED
+  EXPIRED
+  ARCHIVED
+}
+
+enum TrainingGoal {
+  WEIGHT_LOSS
+  MUSCLE_GAIN
+  RECOMPOSITION
+  STRENGTH
+  ENDURANCE
+  GENERAL_HEALTH
+  REHAB
+}
+
+enum ActivityLevel {
+  SEDENTARY
+  LIGHT
+  MODERATE
+  ACTIVE
+  VERY_ACTIVE
+}
+
+enum MuscleGroup {
+  CHEST
+  BACK
+  SHOULDERS
+  BICEPS
+  TRICEPS
+  FOREARMS
+  QUADS
+  HAMSTRINGS
+  GLUTES
+  CALVES
+  ABS
+  FULL_BODY
+  CARDIO
+  MOBILITY
+}
+
+enum Equipment {
+  BODYWEIGHT
+  BARBELL
+  DUMBBELL
+  KETTLEBELL
+  MACHINE
+  CABLE
+  RESISTANCE_BAND
+  SMITH_MACHINE
+  MEDICINE_BALL
+  CARDIO_MACHINE
+  OTHER
+}
+
+enum Difficulty {
+  BEGINNER
+  INTERMEDIATE
+  ADVANCED
+}
+
+enum MealType {
+  BREAKFAST
+  LUNCH
+  DINNER
+  SNACK
+  PRE_WORKOUT
+  POST_WORKOUT
+}
+
+enum PageStatus {
+  DRAFT
+  PUBLISHED
+  HIDDEN
+}
+
+enum BlockType {
+  HERO
+  ABOUT
+  STATS
+  SERVICES
+  PACKAGES
+  CERTIFICATES
+  TRANSFORMATIONS
+  GALLERY
+  VIDEO
+  TESTIMONIALS
+  FAQ
+  CONTACT_FORM
+  CTA_WHATSAPP
+  SOCIAL_LINKS
+  CUSTOM_HTML
+}
+
+enum LeadStatus {
+  NEW
+  CONTACTED
+  CONVERTED
+  LOST
+}
+
+enum NotificationType {
+  ACCOUNT_APPROVED
+  ACCOUNT_REJECTED
+  CERTIFICATE_REVIEWED
+  PAYMENT_APPROVED
+  PAYMENT_REJECTED
+  SUBSCRIPTION_EXPIRING
+  SUBSCRIPTION_EXPIRED
+  NEW_LEAD
+  NEW_TRAINEE
+  TRAINEE_RENEWAL_DUE
+  NEW_MESSAGE
+  QUOTA_WARNING
+  SYSTEM
+}
+
+// ──────────────────────────────────────────────────── identity & access ──
+
+model User {
+  id           String     @id @default(cuid())
+  email        String     @unique
+  phone        String?
+  passwordHash String
+  role         Role       @default(TRAINEE)
+  status       UserStatus @default(ACTIVE)
+  locale       String     @default("ar")
+  emailVerified DateTime?
+  lastLoginAt  DateTime?
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  // Fine-grained permissions for staff accounts (support, finance, moderator).
+  adminRoleId String?
+  adminRole   AdminRole? @relation(fields: [adminRoleId], references: [id], onDelete: SetNull)
+
+  trainerProfile TrainerProfile?
+  traineeProfile Trainee?
+
+  notifications    Notification[]
+  aiUsages         AiUsage[]
+  auditLogs        AuditLog[]       @relation("AuditActor")
+  sentMessages     Message[]        @relation("MessageSender")
+  featureOverrides UserFeatureOverride[]
+
+  @@index([role, status])
+  @@index([createdAt])
+}
+
+model AdminRole {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  description String?
+  /// Permission keys, e.g. ["users.read","payments.approve","plans.write"].
+  permissions String[]
+  isSystem    Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  users User[]
+}
+
+model TrainerProfile {
+  id     String @id @default(cuid())
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  /// Public handle used by the landing page URL: {domain}/c/{username}
+  username         String    @unique
+  usernameChangedAt DateTime?
+
+  fullName        String
+  specialties     Specialty[]
+  phone           String
+  country         String
+  city            String?
+  gender          Gender
+  trainsGenders   TrainsGenders
+  yearsExperience Int
+  bio             String?
+  avatarUrl       String?
+
+  approvalStatus  ApprovalStatus @default(PENDING)
+  rejectionReason String?
+  approvedAt      DateTime?
+  approvedById    String?
+
+  // Paid placement in the public coaches directory.
+  isFeatured    Boolean   @default(false)
+  featuredUntil DateTime?
+  isListed      Boolean   @default(true)
+
+  socialLinks Json? // { instagram, tiktok, youtube, facebook, whatsapp, x }
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  certificates    Certificate[]
+  subscriptions   Subscription[]
+  trainees        Trainee[]
+  packages        TrainerPackage[]
+  exercises       Exercise[]
+  workoutPrograms WorkoutProgram[]
+  nutritionPlans  NutritionPlan[]
+  landingPages    LandingPage[]
+  leads           Lead[]
+  testimonials    Testimonial[]
+  transformations Transformation[]
+  usernameHistory UsernameHistory[]
+  pageViews       PageView[]
+  conversations   Conversation[]
+
+  @@index([approvalStatus])
+  @@index([isFeatured, isListed])
+  @@index([country])
+}
+
+/// Keeps old handles resolvable with a 301 after a username change.
+model UsernameHistory {
+  id        String         @id @default(cuid())
+  username  String         @unique
+  trainerId String
+  trainer   TrainerProfile @relation(fields: [trainerId], references: [id], onDelete: Cascade)
+  createdAt DateTime       @default(now())
+}
+
+model Certificate {
+  id        String         @id @default(cuid())
+  trainerId String
+  trainer   TrainerProfile @relation(fields: [trainerId], references: [id], onDelete: Cascade)
+
+  title      String
+  issuer     String?
+  year       Int?
+  fileUrl    String
+  fileType   String?
+  status     ApprovalStatus @default(PENDING)
+  reviewNote String?
+  reviewedAt DateTime?
+  reviewedById String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([trainerId])
+  @@index([status])
+}
+
+// ─────────────────────────────────────────────── plans, billing & money ──
+
+model Plan {
+  id          String  @id @default(cuid())
+  key         String  @unique
+  nameAr      String
+  nameEn      String
+  taglineAr   String?
+  taglineEn   String?
+  descriptionAr String?
+  descriptionEn String?
+
+  /// Multi-currency price map: { "EGP": 499, "AED": 99, "SAR": 99, "USD": 25 }
+  prices   Json
+  interval BillingInterval @default(MONTHLY)
+  trialDays Int            @default(0)
+
+  // Quotas (null = unlimited)
+  maxTrainees       Int?
+  maxLandingPages   Int?
+  maxExercises      Int?
+  maxNutritionPlans Int?
+  maxTrainerSeats   Int  @default(1)
+  aiCreditsPerCycle Int  @default(0)
+  storageMb         Int  @default(500)
+
+  /// Percentage the platform takes from trainee payments processed on-platform.
+  commissionPercent Decimal @default(0) @db.Decimal(5, 2)
+
+  /// Marketing bullet points: { ar: string[], en: string[] }
+  highlights Json?
+
+  isActive   Boolean @default(true)
+  isPopular  Boolean @default(false)
+  isPublic   Boolean @default(true)
+  sortOrder  Int     @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  subscriptions Subscription[]
+  planFeatures  PlanFeature[]
+
+  @@index([isActive, isPublic, sortOrder])
+}
+
+model Subscription {
+  id        String         @id @default(cuid())
+  trainerId String
+  trainer   TrainerProfile @relation(fields: [trainerId], references: [id], onDelete: Cascade)
+  planId    String
+  plan      Plan           @relation(fields: [planId], references: [id], onDelete: Restrict)
+
+  status    SubscriptionStatus @default(PENDING_PAYMENT)
+  currency  String             @default("EGP")
+  amount    Decimal            @db.Decimal(12, 2)
+
+  startsAt    DateTime?
+  endsAt      DateTime?
+  trialEndsAt DateTime?
+  canceledAt  DateTime?
+  autoRenew   Boolean   @default(false)
+
+  couponId String?
+  coupon   Coupon? @relation(fields: [couponId], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  payments Payment[]
+  counters UsageCounter[]
+
+  @@index([trainerId, status])
+  @@index([status, endsAt])
+}
+
+model Payment {
+  id             String       @id @default(cuid())
+  subscriptionId String
+  subscription   Subscription @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+
+  amount   Decimal       @db.Decimal(12, 2)
+  currency String        @default("EGP")
+  method   PaymentMethod @default(MANUAL_TRANSFER)
+  status   PaymentStatus @default(PENDING)
+
+  /// Uploaded transfer receipt — the core of the manual payment flow.
+  receiptUrl String?
+  reference  String?
+  payerNote  String?
+
+  reviewedById String?
+  reviewedAt   DateTime?
+  adminNote    String?
+
+  /// Set by Kashier/Ziina once gateways are wired up.
+  providerRef String?
+  providerRaw Json?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([status, createdAt])
+  @@index([subscriptionId])
+}
+
+model Coupon {
+  id             String     @id @default(cuid())
+  code           String     @unique
+  type           CouponType @default(PERCENT)
+  value          Decimal    @db.Decimal(10, 2)
+  planIds        String[]
+  maxRedemptions Int?
+  usedCount      Int        @default(0)
+  startsAt       DateTime?
+  expiresAt      DateTime?
+  isActive       Boolean    @default(true)
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
+
+  subscriptions Subscription[]
+}
+
+/// Every platform cost, so the admin profit report can compute
+/// revenue − costs = net margin per plan and per trainer.
+model CostRecord {
+  id        String   @id @default(cuid())
+  kind      CostKind
+  amountUsd Decimal  @db.Decimal(12, 6)
+  trainerId String?
+  planId    String?
+  refType   String?
+  refId     String?
+  note      String?
+  occurredAt DateTime @default(now())
+  createdAt DateTime @default(now())
+
+  @@index([kind, occurredAt])
+  @@index([trainerId])
+}
+
+model UsageCounter {
+  id             String       @id @default(cuid())
+  subscriptionId String
+  subscription   Subscription @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+
+  /// e.g. "ai.generations", "trainees.active", "landing.pages", "storage.mb"
+  key         String
+  used        Int      @default(0)
+  periodStart DateTime
+  periodEnd   DateTime
+  updatedAt   DateTime @updatedAt
+
+  @@unique([subscriptionId, key, periodStart])
+  @@index([key])
+}
+
+// ───────────────────────────────────────────────────────── feature flags ──
+
+model FeatureFlag {
+  id             String   @id @default(cuid())
+  key            String   @unique
+  name           String
+  description    String?
+  type           FlagType @default(BOOLEAN)
+  defaultEnabled Boolean  @default(false)
+  defaultLimit   Int?
+  /// A kill switch overrides plan and user layers when disabled.
+  isKillSwitch   Boolean  @default(false)
+  category       String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  planFeatures  PlanFeature[]
+  userOverrides UserFeatureOverride[]
+}
+
+model PlanFeature {
+  id         String      @id @default(cuid())
+  planId     String
+  plan       Plan        @relation(fields: [planId], references: [id], onDelete: Cascade)
+  flagKey    String
+  flag       FeatureFlag @relation(fields: [flagKey], references: [key], onDelete: Cascade)
+  enabled    Boolean     @default(true)
+  limitValue Int?
+
+  @@unique([planId, flagKey])
+}
+
+model UserFeatureOverride {
+  id         String      @id @default(cuid())
+  userId     String
+  user       User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  flagKey    String
+  flag       FeatureFlag @relation(fields: [flagKey], references: [key], onDelete: Cascade)
+  enabled    Boolean
+  limitValue Int?
+  reason     String?
+  expiresAt  DateTime?
+  createdAt  DateTime    @default(now())
+
+  @@unique([userId, flagKey])
+}
+
+// ──────────────────────────────────────────────────────── training core ──
+
+model Trainee {
+  id        String         @id @default(cuid())
+  userId    String?        @unique
+  user      User?          @relation(fields: [userId], references: [id], onDelete: SetNull)
+  trainerId String
+  trainer   TrainerProfile @relation(fields: [trainerId], references: [id], onDelete: Cascade)
+
+  fullName      String
+  phone         String?
+  email         String?
+  gender        Gender?
+  birthDate     DateTime?
+  heightCm      Decimal?       @db.Decimal(5, 1)
+  startWeightKg Decimal?       @db.Decimal(5, 1)
+  goal          TrainingGoal?
+  activityLevel ActivityLevel?
+  medicalNotes  String?
+  injuries      String?
+  notes         String?
+
+  status      TraineeStatus @default(ACTIVE)
+  startDate   DateTime      @default(now())
+  renewalDate DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  subscriptions   TraineeSubscription[]
+  workoutPrograms WorkoutProgram[]
+  nutritionPlans  NutritionPlan[]
+  measurements    Measurement[]
+  workoutLogs     WorkoutLog[]
+  conversations   Conversation[]
+  convertedFrom   Lead[]
+
+  @@index([trainerId, status])
+  @@index([renewalDate])
+}
+
+model TrainerPackage {
+  id        String         @id @default(cuid())
+  trainerId String
+  trainer   TrainerProfile @relation(fields: [trainerId], references: [id], onDelete: Cascade)
+
+  name          String
+  description   String?
+  price         Decimal @db.Decimal(12, 2)
+  currency      String  @default("EGP")
+  durationDays  Int
+  sessionsCount Int?
+  /// Shown on the public landing page when true.
+  isPublic      Boolean @default(true)
+  isActive      Boolean @default(true)
+  sortOrder     Int     @default(0)
+  features      Json?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  subscriptions TraineeSubscription[]
+
+  @@index([trainerId, isActive])
+}
+
+model TraineeSubscription {
+  id        String         @id @default(cuid())
+  traineeId String
+  trainee   Trainee        @relation(fields: [traineeId], references: [id], onDelete: Cascade)
+  packageId String
+  package   TrainerPackage @relation(fields: [packageId], references: [id], onDelete: Restrict)
+
+  amount     Decimal       @db.Decimal(12, 2)
+  currency   String        @default("EGP")
+  method     PaymentMethod @default(MANUAL_TRANSFER)
+  receiptUrl String?
+  reference  String?
+
+  status       PaymentStatus @default(PENDING)
+  approvedById String?
+  approvedAt   DateTime?
+  adminNote    String?
+
+  startsAt DateTime?
+  endsAt   DateTime?
+
+  /// Platform commission taken from this payment (plan-dependent).
+  commissionAmount Decimal? @db.Decimal(12, 2)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([traineeId, status])
+  @@index([status, createdAt])
+}
+
+model Exercise {
+  id String @id @default(cuid())
+  /// null = platform-wide library curated by the admin.
+  trainerId String?
+  trainer   TrainerProfile? @relation(fields: [trainerId], references: [id], onDelete: Cascade)
+
+  nameAr       String
+  nameEn       String
+  muscleGroup  MuscleGroup
+  equipment    Equipment   @default(BODYWEIGHT)
+  difficulty   Difficulty  @default(BEGINNER)
+  videoUrl     String?
+  imageUrl     String?
+  instructionsAr String?
+  instructionsEn String?
+  isPublic     Boolean     @default(false)
+  isActive     Boolean     @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  workoutItems WorkoutItem[]
+
+  @@index([trainerId])
+  @@index([muscleGroup, equipment])
+  @@index([isPublic, isActive])
+}
+
+model WorkoutProgram {
+  id        String         @id @default(cuid())
+  trainerId String
+  trainer   TrainerProfile @relation(fields: [trainerId], references: [id], onDelete: Cascade)
+  traineeId String?
+  trainee   Trainee?       @relation(fields: [traineeId], references: [id], onDelete: SetNull)
+
+  name        String
+  description String?
+  goal        TrainingGoal?
+  weeksCount  Int           @default(4)
+  /// True when the program is a reusable template rather than an assignment.
+  isTemplate  Boolean       @default(false)
+  isActive    Boolean       @default(true)
+  startDate   DateTime?
+  /// Set when the program was drafted by the AI assistant.
+  aiGenerated Boolean       @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  weeks WorkoutWeek[]
+
+  @@index([trainerId, isTemplate])
+  @@index([traineeId])
+}
+
+model WorkoutWeek {
+  id        String         @id @default(cuid())
+  programId String
+  program   WorkoutProgram @relation(fields: [programId], references: [id], onDelete: Cascade)
+  weekNumber Int
+  note       String?
+
+  days WorkoutDay[]
+
+  @@unique([programId, weekNumber])
+}
+
+model WorkoutDay {
+  id     String      @id @default(cuid())
+  weekId String
+  week   WorkoutWeek @relation(fields: [weekId], references: [id], onDelete: Cascade)
+
+  dayNumber Int
+  title     String?
+  isRestDay Boolean @default(false)
+  note      String?
+
+  items WorkoutItem[]
+
+  @@unique([weekId, dayNumber])
+}
+
+model WorkoutItem {
+  id         String     @id @default(cuid())
+  dayId      String
+  day        WorkoutDay @relation(fields: [dayId], references: [id], onDelete: Cascade)
+  exerciseId String
+  exercise   Exercise   @relation(fields: [exerciseId], references: [id], onDelete: Restrict)
+
+  order    Int
+  sets     Int     @default(3)
+  reps     String  @default("10")
+  restSec  Int     @default(60)
+  tempo    String?
+  rpe      Int?
+  weightKg Decimal? @db.Decimal(6, 2)
+  note     String?
+  supersetGroup String?
+
+  logs WorkoutLog[]
+
+  @@index([dayId, order])
+}
+
+model WorkoutLog {
+  id        String      @id @default(cuid())
+  traineeId String
+  trainee   Trainee     @relation(fields: [traineeId], references: [id], onDelete: Cascade)
+  itemId    String
+  item      WorkoutItem @relation(fields: [itemId], references: [id], onDelete: Cascade)
+
+  performedAt DateTime @default(now())
+  /// [{ set: 1, reps: 10, weightKg: 40 }, ...]
+  sets        Json
+  rpe         Int?
+  note        String?
+
+  createdAt DateTime @default(now())
+
+  @@index([traineeId, performedAt])
+  @@index([itemId])
+}
+
+model FoodItem {
+  id String @id @default(cuid())
+  /// null = platform-wide food library.
+  trainerId String?
+
+  nameAr   String
+  nameEn   String
+  unit     String  @default("g")
+  baseQty  Decimal @default(100) @db.Decimal(8, 2)
+  kcal     Decimal @db.Decimal(8, 2)
+  protein  Decimal @db.Decimal(8, 2)
+  carbs    Decimal @db.Decimal(8, 2)
+  fat      Decimal @db.Decimal(8, 2)
+  category String?
+  isPublic Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  mealItems MealItem[]
+
+  @@index([trainerId])
+  @@index([isPublic])
+}
+
+model NutritionPlan {
+  id        String         @id @default(cuid())
+  trainerId String
+  trainer   TrainerProfile @relation(fields: [trainerId], references: [id], onDelete: Cascade)
+  traineeId String?
+  trainee   Trainee?       @relation(fields: [traineeId], references: [id], onDelete: SetNull)
+
+  name        String
+  description String?
+  targetKcal  Int?
+  targetProtein Int?
+  targetCarbs   Int?
+  targetFat     Int?
+  isTemplate  Boolean @default(false)
+  isActive    Boolean @default(true)
+  aiGenerated Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  meals Meal[]
+
+  @@index([trainerId, isTemplate])
+  @@index([traineeId])
+}
+
+model Meal {
+  id     String        @id @default(cuid())
+  planId String
+  plan   NutritionPlan @relation(fields: [planId], references: [id], onDelete: Cascade)
+
+  type      MealType
+  name      String
+  order     Int      @default(0)
+  timeHint  String?
+  note      String?
+
+  items MealItem[]
+
+  @@index([planId, order])
+}
+
+model MealItem {
+  id     String @id @default(cuid())
+  mealId String
+  meal   Meal   @relation(fields: [mealId], references: [id], onDelete: Cascade)
+
+  foodId   String?
+  food     FoodItem? @relation(fields: [foodId], references: [id], onDelete: SetNull)
+  /// Free-text fallback when the food is not in the library.
+  foodName String
+  qty      Decimal @db.Decimal(8, 2)
+  unit     String  @default("g")
+  kcal     Decimal @db.Decimal(8, 2)
+  protein  Decimal @db.Decimal(8, 2)
+  carbs    Decimal @db.Decimal(8, 2)
+  fat      Decimal @db.Decimal(8, 2)
+  order    Int     @default(0)
+
+  @@index([mealId, order])
+}
+
+model Measurement {
+  id        String  @id @default(cuid())
+  traineeId String
+  trainee   Trainee @relation(fields: [traineeId], references: [id], onDelete: Cascade)
+
+  takenAt    DateTime @default(now())
+  weightKg   Decimal? @db.Decimal(5, 1)
+  bodyFatPct Decimal? @db.Decimal(4, 1)
+  chestCm    Decimal? @db.Decimal(5, 1)
+  waistCm    Decimal? @db.Decimal(5, 1)
+  hipsCm     Decimal? @db.Decimal(5, 1)
+  armCm      Decimal? @db.Decimal(5, 1)
+  thighCm    Decimal? @db.Decimal(5, 1)
+  neckCm     Decimal? @db.Decimal(5, 1)
+  photos     String[]
+  note       String?
+
+  createdAt DateTime @default(now())
+
+  @@index([traineeId, takenAt])
+}
+
+model Conversation {
+  id        String         @id @default(cuid())
+  trainerId String
+  trainer   TrainerProfile @relation(fields: [trainerId], references: [id], onDelete: Cascade)
+  traineeId String
+  trainee   Trainee        @relation(fields: [traineeId], references: [id], onDelete: Cascade)
+
+  lastMessageAt DateTime @default(now())
+  createdAt     DateTime @default(now())
+
+  messages Message[]
+
+  @@unique([trainerId, traineeId])
+  @@index([lastMessageAt])
+}
+
+model Message {
+  id             String       @id @default(cuid())
+  conversationId String
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  senderId       String
+  sender         User         @relation("MessageSender", fields: [senderId], references: [id], onDelete: Cascade)
+
+  body        String
+  attachments String[]
+  readAt      DateTime?
+  createdAt   DateTime  @default(now())
+
+  @@index([conversationId, createdAt])
+}
+
+// ────────────────────────────────────────────── landing pages & funnel ──
+
+model LandingPage {
+  id        String         @id @default(cuid())
+  trainerId String
+  trainer   TrainerProfile @relation(fields: [trainerId], references: [id], onDelete: Cascade)
+
+  title          String
+  seoTitle       String?
+  seoDescription String?
+  ogImageUrl     String?
+  /// { primary, accent, font, radius, mode: "light"|"dark" }
+  theme          Json?
+  status         PageStatus @default(DRAFT)
+  isDefault      Boolean    @default(true)
+  publishedAt    DateTime?
+  viewsCount     Int        @default(0)
+  leadsCount     Int        @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  blocks PageBlock[]
+  leads  Lead[]
+  views  PageView[]
+
+  @@index([trainerId, status])
+}
+
+model PageBlock {
+  id     String      @id @default(cuid())
+  pageId String
+  page   LandingPage @relation(fields: [pageId], references: [id], onDelete: Cascade)
+
+  type      BlockType
+  order     Int
+  /// Block-specific content and settings, validated per type with Zod.
+  props     Json
+  isVisible Boolean   @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([pageId, order])
+}
+
+model Lead {
+  id        String         @id @default(cuid())
+  trainerId String
+  trainer   TrainerProfile @relation(fields: [trainerId], references: [id], onDelete: Cascade)
+  pageId    String?
+  page      LandingPage?   @relation(fields: [pageId], references: [id], onDelete: SetNull)
+
+  name    String
+  phone   String
+  email   String?
+  goal    String?
+  message String?
+
+  source   String?
+  utmSource   String?
+  utmMedium   String?
+  utmCampaign String?
+
+  status            LeadStatus @default(NEW)
+  convertedTraineeId String?
+  convertedTrainee   Trainee?   @relation(fields: [convertedTraineeId], references: [id], onDelete: SetNull)
+  contactedAt       DateTime?
+  note              String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([trainerId, status])
+  @@index([createdAt])
+}
+
+model Testimonial {
+  id        String         @id @default(cuid())
+  trainerId String
+  trainer   TrainerProfile @relation(fields: [trainerId], references: [id], onDelete: Cascade)
+
+  authorName String
+  authorRole String?
+  avatarUrl  String?
+  rating     Int     @default(5)
+  body       String
+  isVisible  Boolean @default(true)
+  sortOrder  Int     @default(0)
+
+  createdAt DateTime @default(now())
+
+  @@index([trainerId])
+}
+
+model Transformation {
+  id        String         @id @default(cuid())
+  trainerId String
+  trainer   TrainerProfile @relation(fields: [trainerId], references: [id], onDelete: Cascade)
+
+  title         String?
+  beforeUrl     String
+  afterUrl      String
+  story         String?
+  durationWeeks Int?
+  isVisible     Boolean @default(true)
+  sortOrder     Int     @default(0)
+
+  createdAt DateTime @default(now())
+
+  @@index([trainerId])
+}
+
+// ────────────────────────────────────────────── analytics & operations ──
+
+/// First-party visitor tracking — no third-party analytics, no cross-site
+/// cookies. Powers the admin traffic tab and each trainer's page stats.
+model PageView {
+  id        String  @id @default(cuid())
+  path      String
+  trainerId String?
+  trainer   TrainerProfile? @relation(fields: [trainerId], references: [id], onDelete: SetNull)
+  pageId    String?
+  page      LandingPage?    @relation(fields: [pageId], references: [id], onDelete: SetNull)
+
+  /// Rotating anonymous id; not linked to a user account.
+  sessionId String
+  referrer  String?
+  utmSource   String?
+  utmMedium   String?
+  utmCampaign String?
+  country   String?
+  device    String?
+  browser   String?
+  isBot     Boolean @default(false)
+
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([trainerId, createdAt])
+  @@index([path, createdAt])
+  @@index([sessionId])
+}
+
+model AiUsage {
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  trainerId    String?
+  feature      String
+  model        String
+  inputTokens  Int     @default(0)
+  outputTokens Int     @default(0)
+  /// USD cost derived from token counts — feeds the admin profit report.
+  costUsd      Decimal @default(0) @db.Decimal(12, 6)
+  success      Boolean @default(true)
+  errorMessage String?
+  durationMs   Int?
+
+  createdAt DateTime @default(now())
+
+  @@index([userId, createdAt])
+  @@index([trainerId, createdAt])
+  @@index([feature])
+}
+
+model AuditLog {
+  id      String @id @default(cuid())
+  actorId String?
+  actor   User?  @relation("AuditActor", fields: [actorId], references: [id], onDelete: SetNull)
+
+  action   String
+  entity   String
+  entityId String?
+  before   Json?
+  after    Json?
+  ip       String?
+  userAgent String?
+  /// Set when the action was performed while impersonating another user.
+  impersonatedUserId String?
+
+  createdAt DateTime @default(now())
+
+  @@index([entity, entityId])
+  @@index([actorId, createdAt])
+  @@index([createdAt])
+}
+
+model EmailLog {
+  id        String   @id @default(cuid())
+  to        String
+  subject   String
+  template  String?
+  status    String   @default("QUEUED")
+  error     String?
+  sentAt    DateTime?
+  createdAt DateTime @default(now())
+
+  @@index([status, createdAt])
+}
+
+model Notification {
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  type    NotificationType
+  titleAr String
+  titleEn String
+  bodyAr  String?
+  bodyEn  String?
+  link    String?
+  payload Json?
+  readAt  DateTime?
+
+  createdAt DateTime @default(now())
+
+  @@index([userId, readAt])
+  @@index([createdAt])
+}
+
+/// Key/value store for everything the admin can configure: brand identity,
+/// manual payment instructions, the Claude API key (encrypted), SEO defaults.
+model AppSetting {
+  key         String   @id
+  value       String
+  isEncrypted Boolean  @default(false)
+  category    String?
+  updatedById String?
+  updatedAt   DateTime @updatedAt
+}
+
+model StaticPage {
+  id        String     @id @default(cuid())
+  slug      String     @unique
+  titleAr   String
+  titleEn   String
+  contentAr String
+  contentEn String
+  status    PageStatus @default(PUBLISHED)
+  updatedAt DateTime   @updatedAt
+  createdAt DateTime   @default(now())
+}
+
+model Announcement {
+  id        String   @id @default(cuid())
+  titleAr   String
+  titleEn   String
+  bodyAr    String?
+  bodyEn    String?
+  variant   String   @default("info")
+  audience  String   @default("ALL")
+  isActive  Boolean  @default(false)
+  startsAt  DateTime?
+  endsAt    DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}

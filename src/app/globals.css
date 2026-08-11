@@ -1,0 +1,114 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 222 20% 12%;
+    --card: 0 0% 100%;
+    --card-foreground: 222 20% 12%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 20% 12%;
+    /* Overridden at runtime from the admin brand settings. */
+    --primary: 158 64% 40%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 210 20% 96%;
+    --secondary-foreground: 222 20% 20%;
+    --muted: 210 20% 96%;
+    --muted-foreground: 215 14% 45%;
+    --accent: 158 60% 95%;
+    --accent-foreground: 158 64% 25%;
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+    --success: 142 71% 40%;
+    --success-foreground: 0 0% 100%;
+    --warning: 38 92% 50%;
+    --warning-foreground: 30 40% 15%;
+    --border: 214 20% 90%;
+    --input: 214 20% 90%;
+    --ring: 158 64% 40%;
+    --radius: 0.75rem;
+  }
+
+  .dark {
+    --background: 222 24% 8%;
+    --foreground: 210 20% 96%;
+    --card: 222 22% 11%;
+    --card-foreground: 210 20% 96%;
+    --popover: 222 22% 11%;
+    --popover-foreground: 210 20% 96%;
+    --primary: 158 60% 46%;
+    --primary-foreground: 222 24% 8%;
+    --secondary: 217 20% 18%;
+    --secondary-foreground: 210 20% 96%;
+    --muted: 217 20% 18%;
+    --muted-foreground: 215 16% 62%;
+    --accent: 158 40% 20%;
+    --accent-foreground: 158 60% 80%;
+    --destructive: 0 62% 52%;
+    --destructive-foreground: 0 0% 100%;
+    --success: 142 60% 45%;
+    --success-foreground: 222 24% 8%;
+    --warning: 38 85% 55%;
+    --warning-foreground: 222 24% 8%;
+    --border: 217 20% 20%;
+    --input: 217 20% 20%;
+    --ring: 158 60% 46%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-feature-settings: 'cv11', 'ss01';
+  }
+
+  /* Arabic numerals read better than Eastern Arabic ones in data tables. */
+  [dir='rtl'] {
+    font-variant-numeric: lining-nums;
+  }
+
+  /* Logical properties so one stylesheet serves both directions. */
+  .start-0 {
+    inset-inline-start: 0;
+  }
+  .end-0 {
+    inset-inline-end: 0;
+  }
+}
+
+@layer components {
+  .card-surface {
+    @apply rounded-lg border bg-card text-card-foreground shadow-sm;
+  }
+
+  .stat-value {
+    @apply text-2xl font-bold tabular-nums tracking-tight;
+  }
+
+  .table-wrap {
+    @apply w-full overflow-x-auto rounded-lg border;
+  }
+
+  /* Sidebar link, both states. */
+  .nav-link {
+    @apply flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground;
+  }
+  .nav-link-active {
+    @apply bg-accent text-accent-foreground;
+  }
+}
+
+@layer utilities {
+  .scrollbar-thin {
+    scrollbar-width: thin;
+  }
+  /* Mirrors an icon that encodes direction (arrows, chevrons) under RTL. */
+  [dir='rtl'] .rtl-flip {
+    transform: scaleX(-1);
+  }
+}
