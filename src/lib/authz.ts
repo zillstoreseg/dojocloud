@@ -60,6 +60,15 @@ export async function requireTrainer(): Promise<SessionUser & { trainerId: strin
   return user as SessionUser & { trainerId: string };
 }
 
+/** Redirecting trainer guard for page components. */
+export async function requireTrainerPage(
+  locale = 'ar',
+): Promise<SessionUser & { trainerId: string }> {
+  const user = await requireUserPage(locale);
+  if (user.role !== 'TRAINER' || !user.trainerId) notFound();
+  return user as SessionUser & { trainerId: string };
+}
+
 /** Trainer guard that also requires an approved account and an active subscription. */
 export async function requireActiveTrainer(): Promise<SessionUser & { trainerId: string }> {
   const user = await requireTrainer();

@@ -1,5 +1,6 @@
 import { setRequestLocale } from 'next-intl/server';
 import { requireAdminPage } from '@/lib/authz';
+import { countryLabel } from '@/lib/countries';
 import { parseListParams } from '@/lib/admin/query';
 import { getRevenueSeries, getRevenueBreakdown, getOverviewStats, rangeOrDefault } from '@/lib/admin/analytics';
 import { AdminPage, AdminSection } from '@/components/admin/page-shell';
@@ -144,7 +145,7 @@ export default async function RevenuePage({
                 ) : (
                   breakdown.byCountry.slice(0, 10).map((row) => (
                     <TableRow key={row.country}>
-                      <TableCell className="text-sm">{row.country}</TableCell>
+                      <TableCell className="text-sm">{countryLabel(row.country, locale)}</TableCell>
                       <TableCell className="text-end tabular-nums">{usd(row.revenue, locale, 2)}</TableCell>
                     </TableRow>
                   ))

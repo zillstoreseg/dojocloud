@@ -1,6 +1,7 @@
 import { setRequestLocale, getTranslations } from 'next-intl/server';
 import type { Prisma } from '@prisma/client';
 import { requireAdminPage } from '@/lib/authz';
+import { countryLabel } from '@/lib/countries';
 import { prisma } from '@/lib/prisma';
 import { parseListParams, paginationArgs, orderByArgs, dateRangeArgs, pageMeta } from '@/lib/admin/query';
 import { AdminPage, AdminTableCard } from '@/components/admin/page-shell';
@@ -91,7 +92,9 @@ export default async function AdminTrainersPage({
           {
             key: 'country',
             label: isAr ? 'الدولة' : 'Country',
-            options: countries.filter((c) => c.country).map((c) => ({ value: c.country, label: c.country })),
+            options: countries
+              .filter((c) => c.country)
+              .map((c) => ({ value: c.country, label: countryLabel(c.country, locale) })),
           },
         ]}
       />
@@ -149,7 +152,7 @@ export default async function AdminTrainersPage({
                         ) : null}
                       </div>
                     </TableCell>
-                    <TableCell className="whitespace-nowrap text-sm">{trainer.country}</TableCell>
+                    <TableCell className="whitespace-nowrap text-sm">{countryLabel(trainer.country, locale)}</TableCell>
                     <TableCell className="text-sm">
                       {sub ? (
                         <div>

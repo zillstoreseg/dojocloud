@@ -1,5 +1,6 @@
 import { setRequestLocale } from 'next-intl/server';
 import { requireAdminPage } from '@/lib/authz';
+import { countryLabel } from '@/lib/countries';
 import { parseListParams } from '@/lib/admin/query';
 import { getTrafficStats, getFunnel, rangeOrDefault } from '@/lib/admin/analytics';
 import { AdminPage, AdminSection } from '@/components/admin/page-shell';
@@ -191,7 +192,7 @@ export default async function TrafficPage({
         )}
         {listCard(
           isAr ? 'الدول' : 'Countries',
-          traffic.byCountry.map((c) => ({ label: c.country, value: c.views })),
+          traffic.byCountry.map((c) => ({ label: countryLabel(c.country, locale), value: c.views })),
           isAr ? 'لا بيانات' : 'No data',
         )}
         {listCard(

@@ -1,6 +1,6 @@
 import { getTranslations, setRequestLocale } from 'next-intl/server';
 import {
-  ArrowLeft,
+  ArrowRight,
   BadgeCheck,
   BarChart3,
   Bot,
@@ -225,7 +225,7 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
                 <Button size="lg" asChild>
                   <Link href="/register">
                     {isAr ? 'ابدأ مجانًا ١٤ يوم' : 'Start 14 days free'}
-                    <ArrowLeft className="rtl-flip" />
+                    <ArrowRight className="rtl-flip" />
                   </Link>
                 </Button>
                 <Button size="lg" variant="outline" asChild>
@@ -366,7 +366,7 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
             <Button variant="outline" asChild>
               <Link href="/coaches">
                 {isAr ? 'كل المدربين' : 'All coaches'}
-                <ArrowLeft className="rtl-flip" />
+                <ArrowRight className="rtl-flip" />
               </Link>
             </Button>
           </Reveal>
@@ -533,7 +533,7 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
                 <Button size="lg" asChild>
                   <Link href="/register">
                     {tNav('register')}
-                    <ArrowLeft className="rtl-flip" />
+                    <ArrowRight className="rtl-flip" />
                   </Link>
                 </Button>
                 <Button size="lg" variant="ghost" asChild>

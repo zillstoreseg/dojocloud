@@ -1,6 +1,7 @@
 import { setRequestLocale, getTranslations } from 'next-intl/server';
 import { BadgeCheck, FileCheck2, Receipt, Users } from 'lucide-react';
 import { requireAdminPage } from '@/lib/authz';
+import { countryLabel } from '@/lib/countries';
 import { prisma } from '@/lib/prisma';
 import { getPendingCounts } from '@/lib/admin/counts';
 import { formatMoney, decimalToNumber } from '@/lib/money';
@@ -126,7 +127,7 @@ export default async function ActivationsPage({
                             {trainer.user.email} · {trainer.phone}
                           </p>
                           <p className="text-sm text-muted-foreground">
-                            {trainer.country}
+                            {countryLabel(trainer.country, locale)}
                             {trainer.city ? ` — ${trainer.city}` : ''} ·{' '}
                             {isAr ? `${trainer.yearsExperience} سنة خبرة` : `${trainer.yearsExperience}y experience`}
                           </p>

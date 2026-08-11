@@ -8,6 +8,8 @@ import { usernameSchema, isUsernameAvailable, suggestUsername } from '@/lib/user
 import { uploadFile, UploadError } from '@/lib/storage';
 import { getSetting } from '@/lib/settings';
 import { toActionError } from '@/lib/authz';
+import { countryLabel } from '@/lib/countries';
+import { registerSchema, type RegisterInput } from './schema';
 
 export interface RegisterResult {
   ok: boolean;
@@ -15,38 +17,6 @@ export interface RegisterResult {
   field?: string;
   trainerId?: string;
 }
-
-const SPECIALTIES = [
-  'GENERAL_FITNESS', 'WEIGHT_LOSS', 'MUSCLE_GAIN', 'BODYBUILDING', 'POWERLIFTING',
-  'CROSSFIT', 'CALISTHENICS', 'ENDURANCE', 'REHAB', 'POSTURE', 'PRE_POSTNATAL',
-  'KIDS', 'SENIORS', 'NUTRITION', 'YOGA', 'PILATES', 'MARTIAL_ARTS', 'SPORTS_PERFORMANCE',
-] as const;
-
-export const registerSchema = z
-  .object({
-    fullName: z.string().trim().min(3, 'اكتب اسمك بالكامل').max(120),
-    email: z.string().trim().toLowerCase().email('البريد الإلكتروني غير صحيح'),
-    password: z.string().min(8, 'كلمة المرور 8 أحرف على الأقل').max(128),
-    confirmPassword: z.string(),
-    phone: z.string().trim().min(7, 'رقم الهاتف غير صحيح').max(20),
-    country: z.string().trim().min(2, 'اختر الدولة'),
-    city: z.string().trim().max(80).optional().or(z.literal('')),
-    gender: z.enum(['MALE', 'FEMALE'], { message: 'اختر النوع' }),
-    trainsGenders: z.enum(['MALE', 'FEMALE', 'BOTH'], { message: 'اختر من تدرّبهم' }),
-    yearsExperience: z.number().int().min(0, 'سنوات الخبرة غير صحيحة').max(60),
-    specialties: z
-      .array(z.enum(SPECIALTIES))
-      .min(1, 'اختر تخصصًا واحدًا على الأقل')
-      .max(6, 'اختر 6 تخصصات كحد أقصى'),
-    username: usernameSchema,
-    bio: z.string().trim().max(1000).optional().or(z.literal('')),
-  })
-  .refine((data) => data.password === data.confirmPassword, {
-    message: 'كلمتا المرور غير متطابقتين',
-    path: ['confirmPassword'],
-  });
-
-export type RegisterInput = z.infer<typeof registerSchema>;
 
 /** Live availability check for the username field. */
 export async function checkUsername(
@@ -130,8 +100,8 @@ export async function registerTrainer(input: RegisterInput): Promise<RegisterRes
           type: 'SYSTEM',
           titleAr: 'طلب اعتماد مدرب جديد',
           titleEn: 'New trainer awaiting approval',
-          bodyAr: `${data.fullName} — ${data.country}`,
-          bodyEn: `${data.fullName} — ${data.country}`,
+          bodyAr: `${data.fullName} — ${countryLabel(data.country, 'ar')}`,
+          bodyEn: `${data.fullName} — ${countryLabel(data.country, 'en')}`,
           link: '/admin/activations',
         }),
       ),

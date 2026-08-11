@@ -32,13 +32,13 @@ function seededRandom(seed: number): () => number {
 }
 
 const TRAINERS = [
-  { name: 'أحمد سيد', username: 'ahmed-fitness', country: 'مصر', city: 'القاهرة', gender: 'MALE', trains: 'BOTH', years: 8, specialties: ['MUSCLE_GAIN', 'BODYBUILDING', 'NUTRITION'], plan: 'pro', approved: true },
-  { name: 'منة الله حسن', username: 'mennah-coach', country: 'مصر', city: 'الإسكندرية', gender: 'FEMALE', trains: 'FEMALE', years: 5, specialties: ['WEIGHT_LOSS', 'PRE_POSTNATAL'], plan: 'starter', approved: true },
-  { name: 'خالد العتيبي', username: 'khaled-pt', country: 'السعودية', city: 'الرياض', gender: 'MALE', trains: 'MALE', years: 12, specialties: ['POWERLIFTING', 'BODYBUILDING', 'SPORTS_PERFORMANCE'], plan: 'elite', approved: true },
-  { name: 'سارة المنصوري', username: 'sara-wellness', country: 'الإمارات', city: 'دبي', gender: 'FEMALE', trains: 'BOTH', years: 6, specialties: ['YOGA', 'PILATES', 'POSTURE'], plan: 'pro', approved: true },
-  { name: 'محمود رفعت', username: 'mahmoud-coach', country: 'مصر', city: 'الجيزة', gender: 'MALE', trains: 'BOTH', years: 3, specialties: ['GENERAL_FITNESS', 'WEIGHT_LOSS'], plan: 'trial', approved: true },
-  { name: 'ياسمين عبد الله', username: 'yasmin-fit', country: 'مصر', city: 'المنصورة', gender: 'FEMALE', trains: 'FEMALE', years: 4, specialties: ['WEIGHT_LOSS', 'CALISTHENICS'], plan: null, approved: false },
-  { name: 'عبد الرحمن الشامي', username: 'abdelrahman-strength', country: 'السعودية', city: 'جدة', gender: 'MALE', trains: 'MALE', years: 7, specialties: ['CROSSFIT', 'ENDURANCE'], plan: null, approved: false },
+  { name: 'أحمد سيد', username: 'ahmed-fitness', country: 'EG', city: 'القاهرة', gender: 'MALE', trains: 'BOTH', years: 8, specialties: ['MUSCLE_GAIN', 'BODYBUILDING', 'NUTRITION'], plan: 'pro', approved: true },
+  { name: 'منة الله حسن', username: 'mennah-coach', country: 'EG', city: 'الإسكندرية', gender: 'FEMALE', trains: 'FEMALE', years: 5, specialties: ['WEIGHT_LOSS', 'PRE_POSTNATAL'], plan: 'starter', approved: true },
+  { name: 'خالد العتيبي', username: 'khaled-pt', country: 'SA', city: 'الرياض', gender: 'MALE', trains: 'MALE', years: 12, specialties: ['POWERLIFTING', 'BODYBUILDING', 'SPORTS_PERFORMANCE'], plan: 'elite', approved: true },
+  { name: 'سارة المنصوري', username: 'sara-wellness', country: 'AE', city: 'دبي', gender: 'FEMALE', trains: 'BOTH', years: 6, specialties: ['YOGA', 'PILATES', 'POSTURE'], plan: 'pro', approved: true },
+  { name: 'محمود رفعت', username: 'mahmoud-coach', country: 'EG', city: 'الجيزة', gender: 'MALE', trains: 'BOTH', years: 3, specialties: ['GENERAL_FITNESS', 'WEIGHT_LOSS'], plan: 'trial', approved: true },
+  { name: 'ياسمين عبد الله', username: 'yasmin-fit', country: 'EG', city: 'المنصورة', gender: 'FEMALE', trains: 'FEMALE', years: 4, specialties: ['WEIGHT_LOSS', 'CALISTHENICS'], plan: null, approved: false },
+  { name: 'عبد الرحمن الشامي', username: 'abdelrahman-strength', country: 'SA', city: 'جدة', gender: 'MALE', trains: 'MALE', years: 7, specialties: ['CROSSFIT', 'ENDURANCE'], plan: null, approved: false },
 ] as const;
 
 const TRAINEE_NAMES = [
