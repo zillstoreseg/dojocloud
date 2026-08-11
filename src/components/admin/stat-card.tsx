@@ -60,7 +60,7 @@ export function StatCard({
 
   if (href) {
     return (
-      <Card className="transition-colors hover:border-primary/40">
+      <Card className="group transition-all duration-element ease-brand hover:-translate-y-1 hover:border-primary/40 hover:shadow-lift">
         <a href={href}>{body}</a>
       </Card>
     );
@@ -100,8 +100,12 @@ export function FunnelStep({
       </div>
       <div className="h-8 w-full overflow-hidden rounded-md bg-muted">
         <div
-          className="h-full rounded-md transition-all"
-          style={{ width: `${Math.max(widthPercent, 2)}%`, background: colors[slot] }}
+          className="grow-bar h-full rounded-md"
+          style={{
+            width: `${Math.max(widthPercent, 2)}%`,
+            background: colors[slot],
+            animationDelay: `${slot * 90}ms`,
+          }}
         />
       </div>
     </div>

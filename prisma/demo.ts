@@ -65,8 +65,6 @@ async function main() {
     process.exit(1);
   }
 
-  const publicExercises = await prisma.exercise.findMany({ where: { isPublic: true }, take: 20 });
-
   let trainerIndex = 0;
   for (const t of TRAINERS) {
     trainerIndex += 1;

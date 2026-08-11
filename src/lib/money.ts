@@ -5,7 +5,12 @@ import type { Prisma } from '@prisma/client';
  * dashboard figures in Western numerals; Arabic-Indic digits also break
  * alignment in data tables where some cells are Latin-only.
  */
-const AR_LOCALE = 'ar-EG-u-nu-latn';
+export const AR_LOCALE = 'ar-EG-u-nu-latn';
+
+/** Resolves an app locale to the Intl locale used for every figure we print. */
+export function intlLocale(locale: string): string {
+  return locale === 'ar' ? AR_LOCALE : 'en-US';
+}
 
 export const SUPPORTED_CURRENCIES = ['EGP', 'AED', 'SAR', 'USD'] as const;
 export type Currency = (typeof SUPPORTED_CURRENCIES)[number];

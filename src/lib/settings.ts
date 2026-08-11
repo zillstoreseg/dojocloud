@@ -10,7 +10,9 @@ export const SETTING_DEFS = {
   'brand.tagline_ar': { default: 'مدربك معاك في أي وقت', secret: false, category: 'brand' },
   'brand.tagline_en': { default: 'Your coach, anytime', secret: false, category: 'brand' },
   'brand.logo_url': { default: '', secret: false, category: 'brand' },
-  'brand.primary_color': { default: '158 64% 40%', secret: false, category: 'brand' },
+  // HSL triples, so the value drops straight into `hsl(var(--primary))`.
+  'brand.primary_color': { default: '164 78% 27%', secret: false, category: 'brand' },
+  'brand.accent_color': { default: '30 79% 57%', secret: false, category: 'brand' },
   'brand.support_email': { default: '', secret: false, category: 'brand' },
   'brand.support_phone': { default: '', secret: false, category: 'brand' },
 
@@ -108,7 +110,8 @@ export const getBrand = cache(async () => {
     taglineAr: s['brand.tagline_ar'] ?? '',
     taglineEn: s['brand.tagline_en'] ?? '',
     logoUrl: s['brand.logo_url'] ?? '',
-    primaryColor: s['brand.primary_color'] || '158 64% 40%',
+    primaryColor: s['brand.primary_color'] || SETTING_DEFS['brand.primary_color'].default,
+    accentColor: s['brand.accent_color'] || SETTING_DEFS['brand.accent_color'].default,
     supportEmail: s['brand.support_email'] ?? '',
     supportPhone: s['brand.support_phone'] ?? '',
   };

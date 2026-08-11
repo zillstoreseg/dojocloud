@@ -7,11 +7,23 @@ const config: Config = {
     container: {
       center: true,
       padding: '1.5rem',
-      screens: { '2xl': '1400px' },
+      screens: { '2xl': '1280px' },
     },
     extend: {
       fontFamily: {
+        // Body: high legibility at small sizes and inside tables.
         sans: ['var(--font-sans)', 'system-ui', 'sans-serif'],
+        // Display: one typeface drawing both Arabic and Latin, so headings
+        // keep the same voice across locales.
+        display: ['var(--font-display)', 'var(--font-sans)', 'system-ui', 'sans-serif'],
+      },
+      fontSize: {
+        // Fluid display scale (ratio 1.25) so headings breathe on wide screens
+        // without a pile of breakpoint overrides.
+        'display-sm': ['clamp(1.5rem, 1.2rem + 1.2vw, 1.953rem)', { lineHeight: '1.25' }],
+        'display-md': ['clamp(1.875rem, 1.4rem + 1.9vw, 2.441rem)', { lineHeight: '1.2' }],
+        'display-lg': ['clamp(2.25rem, 1.6rem + 2.8vw, 3.052rem)', { lineHeight: '1.15' }],
+        'display-xl': ['clamp(2.75rem, 1.8rem + 4vw, 3.815rem)', { lineHeight: '1.1' }],
       },
       colors: {
         border: 'hsl(var(--border))',
@@ -22,6 +34,12 @@ const config: Config = {
         primary: {
           DEFAULT: 'hsl(var(--primary))',
           foreground: 'hsl(var(--primary-foreground))',
+        },
+        // The amber signature. Named apart from `accent` (a surface tint) on
+        // purpose — mixing the two is what makes brand colour look accidental.
+        brand: {
+          DEFAULT: 'hsl(var(--brand-accent))',
+          foreground: 'hsl(var(--brand-accent-foreground))',
         },
         secondary: {
           DEFAULT: 'hsl(var(--secondary))',
@@ -38,6 +56,10 @@ const config: Config = {
         warning: {
           DEFAULT: 'hsl(var(--warning))',
           foreground: 'hsl(var(--warning-foreground))',
+        },
+        info: {
+          DEFAULT: 'hsl(var(--info))',
+          foreground: 'hsl(var(--info-foreground))',
         },
         muted: {
           DEFAULT: 'hsl(var(--muted))',
@@ -57,9 +79,18 @@ const config: Config = {
         },
       },
       borderRadius: {
+        xl: 'calc(var(--radius) + 6px)',
         lg: 'var(--radius)',
-        md: 'calc(var(--radius) - 2px)',
-        sm: 'calc(var(--radius) - 4px)',
+        md: 'calc(var(--radius) - 6px)',
+        sm: 'calc(var(--radius) - 10px)',
+      },
+      transitionTimingFunction: {
+        brand: 'var(--ease-brand)',
+      },
+      transitionDuration: {
+        micro: '120ms',
+        element: '220ms',
+        page: '380ms',
       },
       keyframes: {
         'accordion-down': {
@@ -70,10 +101,25 @@ const config: Config = {
           from: { height: 'var(--radix-accordion-content-height)' },
           to: { height: '0' },
         },
+        shimmer: {
+          from: { backgroundPosition: '180% 0' },
+          to: { backgroundPosition: '-80% 0' },
+        },
+        'rise-in': {
+          from: { opacity: '0', transform: 'translateY(8px)' },
+          to: { opacity: '1', transform: 'none' },
+        },
+        'pulse-ring': {
+          '0%, 100%': { opacity: '0.35', transform: 'scale(1)' },
+          '50%': { opacity: '0.1', transform: 'scale(1.08)' },
+        },
       },
       animation: {
         'accordion-down': 'accordion-down 0.2s ease-out',
         'accordion-up': 'accordion-up 0.2s ease-out',
+        shimmer: 'shimmer 1.4s var(--ease-brand) infinite',
+        'rise-in': 'rise-in 380ms var(--ease-brand) both',
+        'pulse-ring': 'pulse-ring 1.8s var(--ease-brand) infinite',
       },
     },
   },

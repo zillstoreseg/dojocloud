@@ -7,7 +7,7 @@
     "dev": "next dev",
     "build": "prisma generate && next build",
     "start": "next start",
-    "lint": "next lint",
+    "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate dev",
@@ -59,6 +59,7 @@
     "clsx": "^2.1.1",
     "date-fns": "^4.1.0",
     "lucide-react": "^0.525.0",
+    "motion": "^13.1.0",
     "next": "^15.4.0",
     "next-auth": "^5.0.0-beta.29",
     "next-intl": "^4.3.4",
@@ -73,6 +74,7 @@
     "zod": "^3.25.76"
   },
   "devDependencies": {
+    "@eslint/eslintrc": "^3.3.6",
     "@playwright/test": "^1.54.1",
     "@types/bcryptjs": "^3.0.0",
     "@types/node": "^22.16.0",

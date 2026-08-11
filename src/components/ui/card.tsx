@@ -3,7 +3,16 @@ import { cn } from '@/lib/utils';
 
 const Card = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(
   ({ className, ...props }, ref) => (
-    <div ref={ref} className={cn('rounded-lg border bg-card text-card-foreground shadow-sm', className)} {...props} />
+    // Soft layered shadow instead of a hard border: the card reads as an
+    // object sitting on the ivory ground rather than a drawn rectangle.
+    <div
+      ref={ref}
+      className={cn(
+        'rounded-lg border border-border/60 bg-card text-card-foreground shadow-soft',
+        className,
+      )}
+      {...props}
+    />
   ),
 );
 Card.displayName = 'Card';
@@ -17,7 +26,7 @@ CardHeader.displayName = 'CardHeader';
 
 const CardTitle = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(
   ({ className, ...props }, ref) => (
-    <h3 ref={ref} className={cn('font-semibold leading-none tracking-tight', className)} {...props} />
+    <h3 ref={ref} className={cn('font-display font-semibold leading-none', className)} {...props} />
   ),
 );
 CardTitle.displayName = 'CardTitle';

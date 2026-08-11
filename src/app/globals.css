@@ -2,59 +2,108 @@
 @tailwind components;
 @tailwind utilities;
 
+/*
+ * CoachMate design tokens.
+ *
+ * The palette is deliberately not the usual gym cliché (black + neon green).
+ * It is "athletic editorial": a deep pine brand colour, a warm amber accent
+ * used sparingly, and a warm ivory ground instead of pure white — the ivory
+ * is what makes the product recognisable at a glance.
+ *
+ * Every value is an HSL triple so Tailwind can compose opacity, and so the
+ * admin brand settings can override --primary / --brand-accent at runtime
+ * without a rebuild.
+ */
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222 20% 12%;
+    /* Ground and ink — neither is pure white or pure black. */
+    --background: 43 33% 96%; /* #F8F6F1 warm ivory */
+    --foreground: 165 48% 8%; /* #0B1F1A green-black */
     --card: 0 0% 100%;
-    --card-foreground: 222 20% 12%;
+    --card-foreground: 165 48% 8%;
     --popover: 0 0% 100%;
-    --popover-foreground: 222 20% 12%;
-    /* Overridden at runtime from the admin brand settings. */
-    --primary: 158 64% 40%;
+    --popover-foreground: 165 48% 8%;
+
+    /* Brand. Overridden at runtime from the admin brand settings. */
+    --primary: 164 78% 27%; /* #0F7A5E deep pine */
     --primary-foreground: 0 0% 100%;
-    --secondary: 210 20% 96%;
-    --secondary-foreground: 222 20% 20%;
-    --muted: 210 20% 96%;
-    --muted-foreground: 215 14% 45%;
-    --accent: 158 60% 95%;
-    --accent-foreground: 158 64% 25%;
-    --destructive: 0 72% 51%;
+    --brand-accent: 30 79% 57%; /* #E8913A amber — used sparingly */
+    --brand-accent-foreground: 165 48% 8%;
+
+    --secondary: 40 27% 91%;
+    --secondary-foreground: 165 40% 16%;
+    --muted: 40 27% 91%;
+    --muted-foreground: 160 8% 39%; /* 5.2:1 on the ivory ground */
+    --accent: 157 29% 91%;
+    --accent-foreground: 164 60% 18%;
+
+    /* States — defined independently, never derived from the brand colour. */
+    --destructive: 0 68% 46%;
     --destructive-foreground: 0 0% 100%;
-    --success: 142 71% 40%;
+    --success: 158 68% 30%;
     --success-foreground: 0 0% 100%;
-    --warning: 38 92% 50%;
-    --warning-foreground: 30 40% 15%;
-    --border: 214 20% 90%;
-    --input: 214 20% 90%;
-    --ring: 158 64% 40%;
-    --radius: 0.75rem;
+    /* A deep ochre rather than a bright amber: `warning` is used both as a
+       banner background (white text on it) and as icon/text colour on the
+       ivory ground, and only this range clears 4.5:1 in both roles. */
+    --warning: 32 88% 34%;
+    --warning-foreground: 0 0% 100%;
+    --info: 213 68% 44%;
+    --info-foreground: 0 0% 100%;
+
+    /* `border` is decorative (dividers, card edges) and stays light.
+       `input` is a control boundary, so it carries the 3:1 that WCAG 1.4.11
+       requires — it is what makes a field identifiable. */
+    --border: 42 19% 87%;
+    --input: 40 12% 50%;
+    --ring: 164 78% 27%;
+
+    --radius: 1.125rem; /* 18px — cards read as objects, not boxes */
+
+    /* Layered shadows instead of hard borders. */
+    --shadow-soft: 0 1px 2px hsl(165 30% 10% / 0.04), 0 4px 12px hsl(165 30% 10% / 0.05);
+    --shadow-lift: 0 2px 4px hsl(165 30% 10% / 0.05), 0 12px 28px hsl(165 30% 10% / 0.09);
+    --shadow-pop: 0 4px 8px hsl(165 30% 10% / 0.06), 0 24px 48px hsl(165 30% 10% / 0.14);
+
+    /* The one motion curve the whole product uses. */
+    --ease-brand: cubic-bezier(0.32, 0.72, 0, 1);
   }
 
   .dark {
-    --background: 222 24% 8%;
-    --foreground: 210 20% 96%;
-    --card: 222 22% 11%;
-    --card-foreground: 210 20% 96%;
-    --popover: 222 22% 11%;
-    --popover-foreground: 210 20% 96%;
-    --primary: 158 60% 46%;
-    --primary-foreground: 222 24% 8%;
-    --secondary: 217 20% 18%;
-    --secondary-foreground: 210 20% 96%;
-    --muted: 217 20% 18%;
-    --muted-foreground: 215 16% 62%;
-    --accent: 158 40% 20%;
-    --accent-foreground: 158 60% 80%;
-    --destructive: 0 62% 52%;
-    --destructive-foreground: 0 0% 100%;
-    --success: 142 60% 45%;
-    --success-foreground: 222 24% 8%;
-    --warning: 38 85% 55%;
-    --warning-foreground: 222 24% 8%;
-    --border: 217 20% 20%;
-    --input: 217 20% 20%;
-    --ring: 158 60% 46%;
+    --background: 160 27% 6%; /* #0C1512 */
+    --foreground: 154 20% 93%; /* #EAF1EE */
+    --card: 160 24% 10%; /* #131F1B */
+    --card-foreground: 154 20% 93%;
+    --popover: 160 24% 10%;
+    --popover-foreground: 154 20% 93%;
+
+    --primary: 163 55% 41%; /* #2FA383 */
+    --primary-foreground: 165 48% 8%;
+    --brand-accent: 30 84% 64%; /* #F0A455 */
+    --brand-accent-foreground: 165 48% 8%;
+
+    --secondary: 162 16% 17%;
+    --secondary-foreground: 154 20% 93%;
+    --muted: 162 16% 17%;
+    --muted-foreground: 158 8% 61%; /* 7:1 on the dark ground */
+    --accent: 163 26% 18%;
+    --accent-foreground: 158 45% 78%;
+
+    --destructive: 0 72% 64%;
+    --destructive-foreground: 165 48% 8%;
+    --success: 158 52% 45%;
+    --success-foreground: 165 48% 8%;
+    --warning: 34 88% 60%;
+    --warning-foreground: 165 48% 8%;
+    --info: 213 74% 62%;
+    --info-foreground: 165 48% 8%;
+
+    --border: 162 14% 20%;
+    --input: 162 12% 40%;
+    --ring: 163 55% 41%;
+
+    --shadow-soft: 0 1px 2px hsl(0 0% 0% / 0.3), 0 4px 12px hsl(0 0% 0% / 0.28);
+    --shadow-lift: 0 2px 4px hsl(0 0% 0% / 0.34), 0 12px 28px hsl(0 0% 0% / 0.4);
+    --shadow-pop: 0 4px 8px hsl(0 0% 0% / 0.38), 0 24px 48px hsl(0 0% 0% / 0.5);
   }
 }
 
@@ -62,14 +111,43 @@
   * {
     @apply border-border;
   }
+
   body {
     @apply bg-background text-foreground antialiased;
-    font-feature-settings: 'cv11', 'ss01';
+    font-feature-settings: 'ss01';
   }
 
-  /* Arabic numerals read better than Eastern Arabic ones in data tables. */
+  /* Arabic wants more leading and no negative tracking; Latin headlines want
+     the opposite. Splitting them here keeps every heading honest. */
+  h1,
+  h2,
+  h3,
+  h4 {
+    @apply font-display;
+    line-height: 1.2;
+  }
+
+  [dir='rtl'] h1,
+  [dir='rtl'] h2,
+  [dir='rtl'] h3,
+  [dir='rtl'] h4 {
+    letter-spacing: 0;
+    line-height: 1.35;
+  }
+
+  [dir='rtl'] p,
+  [dir='rtl'] li {
+    line-height: 1.75;
+  }
+
+  /* Latin numerals read better than Eastern Arabic ones in data tables. */
   [dir='rtl'] {
     font-variant-numeric: lining-nums;
+  }
+
+  /* One visible focus treatment everywhere, brand-coloured. */
+  :focus-visible {
+    @apply outline-none ring-2 ring-ring ring-offset-2 ring-offset-background;
   }
 
   /* Logical properties so one stylesheet serves both directions. */
@@ -83,23 +161,36 @@
 
 @layer components {
   .card-surface {
-    @apply rounded-lg border bg-card text-card-foreground shadow-sm;
+    @apply rounded-lg border bg-card text-card-foreground shadow-soft;
   }
 
   .stat-value {
-    @apply text-2xl font-bold tabular-nums tracking-tight;
+    @apply font-display text-3xl font-semibold tabular-nums tracking-tight;
   }
 
   .table-wrap {
     @apply w-full overflow-x-auto rounded-lg border;
   }
 
-  /* Sidebar link, both states. */
+  /* Sidebar link, both states. The active marker is an inline-start bar so it
+     mirrors correctly under RTL without a second rule. */
   .nav-link {
-    @apply flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground;
+    @apply relative flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-muted-foreground transition-colors duration-150 hover:bg-accent hover:text-accent-foreground;
   }
   .nav-link-active {
     @apply bg-accent text-accent-foreground;
+  }
+  /* Active marker sits on the link's leading edge, so it mirrors under RTL
+     without a second rule and never escapes the sidebar. */
+  .nav-link-active::before {
+    content: '';
+    @apply absolute inset-y-1.5 w-1 rounded-full bg-primary;
+    inset-inline-start: 0;
+  }
+
+  /* Section eyebrow used above headings across the marketing pages. */
+  .eyebrow {
+    @apply text-xs font-semibold uppercase tracking-[0.14em] text-primary;
   }
 }
 
@@ -107,8 +198,98 @@
   .scrollbar-thin {
     scrollbar-width: thin;
   }
+
   /* Mirrors an icon that encodes direction (arrows, chevrons) under RTL. */
   [dir='rtl'] .rtl-flip {
     transform: scaleX(-1);
+  }
+
+  /*
+   * Signature background: faint contour lines, the visual shorthand for
+   * "a journey / progress". Pure CSS so it costs no request and inherits the
+   * brand colour in both themes.
+   */
+  .bg-contour {
+    background-image:
+      repeating-radial-gradient(
+        circle at 18% 8%,
+        hsl(var(--primary) / 0.07) 0,
+        hsl(var(--primary) / 0.07) 1px,
+        transparent 1px,
+        transparent 34px
+      ),
+      repeating-radial-gradient(
+        circle at 86% 78%,
+        hsl(var(--brand-accent) / 0.07) 0,
+        hsl(var(--brand-accent) / 0.07) 1px,
+        transparent 1px,
+        transparent 46px
+      );
+  }
+
+  /* Fades any decorative layer out towards the bottom of its section. */
+  .mask-fade-b {
+    -webkit-mask-image: linear-gradient(to bottom, black 35%, transparent 100%);
+    mask-image: linear-gradient(to bottom, black 35%, transparent 100%);
+  }
+
+  .shadow-soft {
+    box-shadow: var(--shadow-soft);
+  }
+  .shadow-lift {
+    box-shadow: var(--shadow-lift);
+  }
+  .shadow-pop {
+    box-shadow: var(--shadow-pop);
+  }
+
+  /*
+   * Grows a bar from its leading edge. The width itself stays an inline style,
+   * so this only animates `transform` — and `transform-origin` follows the
+   * writing direction, so funnels read correctly in RTL.
+   */
+  .grow-bar {
+    transform-origin: left center;
+    animation: grow-x 700ms var(--ease-brand) both;
+  }
+  [dir='rtl'] .grow-bar {
+    transform-origin: right center;
+  }
+
+  @keyframes grow-x {
+    from {
+      transform: scaleX(0);
+    }
+    to {
+      transform: scaleX(1);
+    }
+  }
+
+  /* Loading shimmer for optimistic states. */
+  .shimmer {
+    background-image: linear-gradient(
+      100deg,
+      transparent 20%,
+      hsl(var(--foreground) / 0.06) 40%,
+      hsl(var(--foreground) / 0.06) 60%,
+      transparent 80%
+    );
+    background-size: 220% 100%;
+    animation: shimmer 1.4s var(--ease-brand) infinite;
+  }
+}
+
+/*
+ * Accessibility floor: users who ask for less motion get opacity only.
+ * This has to sit outside @layer so it wins over component-level animation.
+ */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
 }

@@ -6,6 +6,7 @@ import { useLocale } from 'next-intl';
 import * as Icons from 'lucide-react';
 import { Menu, X } from 'lucide-react';
 import { Link } from '@/i18n/navigation';
+import { Logo } from '@/components/brand/logo';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -101,9 +102,9 @@ export function AdminSidebar({ sections, counts, brandName }: Props) {
           open ? 'translate-x-0' : 'max-md:ltr:-translate-x-full max-md:rtl:translate-x-full',
         )}
       >
-        <div className="flex h-16 shrink-0 items-center border-b px-6">
-          <Link href="/admin" className="text-lg font-bold text-primary">
-            {brandName}
+        <div className="flex h-16 shrink-0 items-center border-b px-5">
+          <Link href="/admin" className="text-primary">
+            <Logo name={brandName} />
           </Link>
           <Badge variant="muted" className="ms-2 text-[10px]">
             {isAr ? 'إدارة' : 'Admin'}

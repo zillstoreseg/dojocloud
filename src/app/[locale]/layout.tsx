@@ -3,15 +3,12 @@ import type { ReactNode } from 'react';
 import { notFound } from 'next/navigation';
 import { NextIntlClientProvider, hasLocale } from 'next-intl';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
-import { Cairo, Inter } from 'next/font/google';
 import { routing, localeDirection, type Locale } from '@/i18n/routing';
 import { getBrand } from '@/lib/settings';
+import { display, body } from '@/lib/fonts';
 import { SessionProvider } from '@/components/providers/session-provider';
 import { Toaster } from '@/components/ui/toaster';
 import '../globals.css';
-
-const cairo = Cairo({ subsets: ['arabic', 'latin'], variable: '--font-sans', display: 'swap' });
-const inter = Inter({ subsets: ['latin'], variable: '--font-sans-en', display: 'swap' });
 
 export function generateStaticParams() {
   return routing.locales.map((locale) => ({ locale }));
@@ -30,7 +27,8 @@ export async function generateMetadata({
   return {
     title: { default: `${brand.name} — ${tagline}`, template: `%s | ${brand.name}` },
     description: tagline || t('tagline'),
-    icons: { icon: '/favicon.ico' },
+    // The icon comes from `src/app/icon.svg` via the file convention, so it
+    // is fingerprinted and served without a 404 round trip.
     openGraph: {
       siteName: brand.name,
       locale: locale === 'ar' ? 'ar_EG' : 'en_US',
@@ -57,10 +55,14 @@ export default async function LocaleLayout({
   return (
     <html lang={locale} dir={dir} suppressHydrationWarning>
       <body
-        className={`${cairo.variable} ${inter.variable} font-sans`}
-        // The admin's brand colour is applied as a CSS variable so the whole
+        className={`${display.variable} ${body.variable} font-sans`}
+        // The admin's brand colours are applied as CSS variables so the whole
         // design system re-themes without a rebuild.
-        style={{ ['--primary' as string]: brand.primaryColor, ['--ring' as string]: brand.primaryColor }}
+        style={{
+          ['--primary' as string]: brand.primaryColor,
+          ['--ring' as string]: brand.primaryColor,
+          ['--brand-accent' as string]: brand.accentColor,
+        }}
       >
         <SessionProvider>
           <NextIntlClientProvider>

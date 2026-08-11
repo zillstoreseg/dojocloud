@@ -77,6 +77,7 @@ export const ADMIN_NAV: AdminNavSection[] = [
     labelEn: 'System',
     items: [
       { href: '/admin/flags', labelAr: 'الميزات (Flags)', labelEn: 'Feature flags', icon: 'ToggleLeft', permission: 'flags.write' },
+      { href: '/admin/design', labelAr: 'نظام التصميم', labelEn: 'Design system', icon: 'Palette', permission: 'settings.write' },
       { href: '/admin/settings', labelAr: 'الإعدادات', labelEn: 'Settings', icon: 'Settings', permission: 'settings.write' },
       { href: '/admin/audit', labelAr: 'سجل التدقيق', labelEn: 'Audit log', icon: 'ScrollText', permission: 'audit.read' },
     ],
