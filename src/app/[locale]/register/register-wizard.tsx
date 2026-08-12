@@ -33,7 +33,17 @@ export function RegisterWizard({ locale, options, labels }: Props) {
   const router = useRouter();
   const [step, setStep] = useState(0);
   const [direction, setDirection] = useState<1 | -1>(1);
-  const [draft, setDraft] = useState<Draft>({ specialties: [], yearsExperience: undefined });
+  // `?ref=CODE` on the signup link prefills the invite field. Read from the
+  // URL rather than a cookie so a shared link works in a fresh browser, which
+  // is the only way a referral link is ever actually opened.
+  const [draft, setDraft] = useState<Draft>(() => ({
+    specialties: [],
+    yearsExperience: undefined,
+    referralCode:
+      typeof window === 'undefined'
+        ? ''
+        : (new URLSearchParams(window.location.search).get('ref') ?? '').toUpperCase().slice(0, 16),
+  }));
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [formError, setFormError] = useState<string | null>(null);
   const [submitting, startSubmit] = useTransition();
@@ -393,6 +403,21 @@ export function RegisterWizard({ locale, options, labels }: Props) {
                     value={draft.bio ?? ''}
                     onChange={(e) => set('bio', e.target.value)}
                     maxLength={1000}
+                  />
+                </Field>
+
+                <Field
+                  label={labels.referralCode}
+                  htmlFor="referralCode"
+                  error={errors.referralCode}
+                  hint={labels.referralCodeHint}
+                >
+                  <Input
+                    id="referralCode"
+                    dir="ltr"
+                    value={draft.referralCode ?? ''}
+                    onChange={(e) => set('referralCode', e.target.value.toUpperCase())}
+                    maxLength={16}
                   />
                 </Field>
 

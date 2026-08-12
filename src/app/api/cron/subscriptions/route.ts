@@ -102,10 +102,82 @@ export async function POST(request: Request) {
     reminders += 1;
   }
 
-  // ── 3. Release wallet holds that have matured ───────────────────────────
+  // ── 3. Trainees whose subscription with their coach is running out ──────
+  //
+  // This is the coach's revenue, not the platform's, so the reminder goes to
+  // both: the trainee, who has to pay, and the coach, whose income depends on
+  // asking. A coach who learns about a lapse a week late has usually lost the
+  // trainee.
+  const traineeHorizon = new Date(now.getTime() + (REMINDER_DAYS[0] + 1) * 864e5);
+  const renewing = await prisma.trainee.findMany({
+    where: {
+      status: 'ACTIVE',
+      renewalDate: { gte: now, lte: traineeHorizon },
+    },
+    select: {
+      id: true,
+      fullName: true,
+      renewalDate: true,
+      userId: true,
+      trainer: { select: { userId: true } },
+    },
+  });
+
+  let traineeReminders = 0;
+  for (const trainee of renewing) {
+    const left = daysRemaining(trainee.renewalDate, now);
+    const threshold = REMINDER_DAYS.find((day) => left === day);
+    if (!threshold) continue;
+
+    const payload = { kind: 'trainee-renewal', traineeId: trainee.id, daysOut: threshold };
+
+    const already = await prisma.notification.findFirst({
+      where: {
+        userId: trainee.trainer.userId,
+        type: 'TRAINEE_RENEWAL_DUE',
+        payload: { equals: payload },
+      },
+      select: { id: true },
+    });
+    if (already) continue;
+
+    await notify({
+      userId: trainee.trainer.userId,
+      type: 'TRAINEE_RENEWAL_DUE',
+      titleAr: `اشتراك ${trainee.fullName} على وشك الانتهاء`,
+      titleEn: `${trainee.fullName}'s subscription is ending`,
+      bodyAr: `باقي ${threshold} ${threshold === 1 ? 'يوم' : 'أيام'}. كلّمه قبل ما يقف.`,
+      bodyEn: `${threshold} day${threshold === 1 ? '' : 's'} left. Reach out before it lapses.`,
+      link: '/dash/trainees',
+      payload,
+    });
+    traineeReminders += 1;
+
+    // Only trainees who chose a login have somewhere to receive this.
+    if (trainee.userId) {
+      await notify({
+        userId: trainee.userId,
+        type: 'TRAINEE_RENEWAL_DUE',
+        titleAr: 'اشتراكك على وشك الانتهاء',
+        titleEn: 'Your subscription is ending soon',
+        bodyAr: `باقي ${threshold} ${threshold === 1 ? 'يوم' : 'أيام'}. جدّد مع مدربك عشان تكمّل برنامجك.`,
+        bodyEn: `${threshold} day${threshold === 1 ? '' : 's'} left. Renew with your coach to keep going.`,
+        link: '/my/subscription',
+        payload,
+      });
+    }
+  }
+
+  // ── 4. Release wallet holds that have matured ───────────────────────────
   // Coaches also get a lazy release when they open their wallet, so a missed
   // run delays the ledger entry rather than the coach's money.
   const released = await releaseMatured().catch(() => 0);
 
-  return NextResponse.json({ ok: true, expired: expiring.length, reminders, released });
+  return NextResponse.json({
+    ok: true,
+    expired: expiring.length,
+    reminders,
+    traineeReminders,
+    released,
+  });
 }

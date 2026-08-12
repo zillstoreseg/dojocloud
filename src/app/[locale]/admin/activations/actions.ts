@@ -9,6 +9,7 @@ import { syncDirectoryCounters } from '@/lib/directory';
 import { creditTraineePayment } from '@/lib/wallet';
 import { addInterval } from '@/lib/utils';
 import { resetCounters } from '@/lib/quota';
+import { grantReferralReward } from '@/lib/referrals';
 import { decimalToNumber, formatMoney } from '@/lib/money';
 
 export interface ActionResult {
@@ -238,6 +239,14 @@ export async function approvePayment(input: { id: string; note?: string }): Prom
         link: '/dash',
       }),
     ]);
+
+    // Their first paid cycle is what a referral is rewarded for. Runs after the
+    // subscription is live, and is idempotent, so a re-approval or a renewal
+    // cannot pay the reward twice.
+    await grantReferralReward(sub.trainerId).catch((error) => {
+      console.error('[referral] reward failed', error);
+      return null;
+    });
 
     revalidatePath('/[locale]/admin/activations', 'page');
     return { ok: true, message: `تم تفعيل اشتراك ${sub.trainer.fullName}` };

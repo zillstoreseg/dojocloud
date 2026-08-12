@@ -33,6 +33,8 @@ export const registerSchema = z
       .max(6, 'اختر 6 تخصصات كحد أقصى'),
     username: usernameSchema,
     bio: z.string().trim().max(1000).optional().or(z.literal('')),
+    /** Invite code from another coach. Prefilled from `?ref=` on the URL. */
+    referralCode: z.string().trim().max(16).optional().or(z.literal('')),
   })
   .refine((data) => data.password === data.confirmPassword, {
     message: 'كلمتا المرور غير متطابقتين',
@@ -46,7 +48,7 @@ export const STEP_FIELDS = [
   ['fullName', 'gender', 'email', 'password', 'confirmPassword'],
   ['specialties', 'yearsExperience', 'trainsGenders'],
   ['country', 'phone', 'city'],
-  ['username', 'bio'],
+  ['username', 'bio', 'referralCode'],
 ] as const satisfies readonly (readonly (keyof RegisterInput)[])[];
 
 /**

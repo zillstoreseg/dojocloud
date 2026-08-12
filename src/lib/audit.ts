@@ -55,8 +55,26 @@ export interface NotifyInput {
   bodyEn?: string;
   link?: string;
   payload?: Record<string, unknown>;
+  /**
+   * Set false to keep a notification in-app only, regardless of the admin's
+   * email settings. For the high-frequency ones — a new scan, a logged set —
+   * where an inbox entry would be noise rather than news.
+   */
+  email?: boolean;
 }
 
+/**
+ * Writes an in-app notification, and emails it when the admin has said that
+ * this kind of notification is worth an email.
+ *
+ * The in-app row is written first and independently: if mail is misconfigured
+ * the user still sees the notification when they next open the app, which is
+ * the guarantee that matters. Mail is the escalation, not the record.
+ *
+ * Which types escalate is a setting rather than a hard-coded list, because the
+ * right answer differs per platform — some owners want every lead emailed,
+ * others would consider that spam.
+ */
 export async function notify(input: NotifyInput): Promise<void> {
   try {
     await prisma.notification.create({
@@ -73,6 +91,40 @@ export async function notify(input: NotifyInput): Promise<void> {
     });
   } catch (error) {
     console.error('[notify] failed to create notification', error);
+  }
+
+  if (input.email === false) return;
+
+  try {
+    const { getSetting } = await import('./settings');
+    const enabled = (await getSetting('email.notify_types'))
+      .split(',')
+      .map((t) => t.trim())
+      .filter(Boolean);
+    if (!enabled.includes(input.type)) return;
+
+    const { emailUser } = await import('./email');
+    await emailUser({
+      userId: input.userId,
+      template: `notify.${input.type.toLowerCase()}`,
+      subject: { ar: input.titleAr, en: input.titleEn },
+      content: {
+        ar: {
+          preheader: input.bodyAr ?? input.titleAr,
+          heading: input.titleAr,
+          body: input.bodyAr ? [input.bodyAr] : [],
+          cta: input.link ? { label: 'افتح من هنا', href: input.link } : undefined,
+        },
+        en: {
+          preheader: input.bodyEn ?? input.titleEn,
+          heading: input.titleEn,
+          body: input.bodyEn ? [input.bodyEn] : [],
+          cta: input.link ? { label: 'Open it', href: input.link } : undefined,
+        },
+      },
+    });
+  } catch (error) {
+    console.error('[notify] failed to send email', error);
   }
 }
 

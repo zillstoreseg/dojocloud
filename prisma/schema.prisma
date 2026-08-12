@@ -324,6 +324,17 @@ model TrainerProfile {
 
   socialLinks Json? // { instagram, tiktok, youtube, facebook, whatsapp, x }
 
+  /// Their own invite code, and who invited them. Both live here rather than
+  /// on `User` because only coaches refer coaches — a trainee has nobody to
+  /// invite, and the reward is paid in subscription days.
+  referralCode   String? @unique
+  referredById   String?
+  referredBy     TrainerProfile?  @relation("Referrals", fields: [referredById], references: [id], onDelete: SetNull)
+  referrals      TrainerProfile[] @relation("Referrals")
+  /// Set once, when the referred coach's first payment is approved, so the
+  /// reward can never be granted twice however many times they renew.
+  referralRewardedAt DateTime?
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -348,6 +359,7 @@ model TrainerProfile {
   @@index([country])
   // The directory's default ordering: featured first, then most subscribed.
   @@index([approvalStatus, isListed, isFeatured, activeTraineesCount])
+  @@index([referredById])
   @@index([yearsExperience])
 }
 

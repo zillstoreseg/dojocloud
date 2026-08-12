@@ -114,6 +114,8 @@ export default async function RegisterPage({
                 usernameTaken: 'الاسم محجوز. جرّب:',
                 bio: 'نبذة عنك (اختياري)',
                 bioHint: 'تقدر تكتبها لاحقًا من لوحة التحكم.',
+                referralCode: 'كود دعوة (اختياري)',
+                referralCodeHint: 'لو مدرب دعاك، اكتب كوده — وهتاخدوا الاتنين شهر مجاني.',
                 reviewNotice:
                   'بعد التسجيل هترفع شهاداتك، وهتتراجع وتُعتمد من الإدارة قبل ما حسابك يشتغل. هيوصلك إشعار أول ما تخلص المراجعة.',
                 back: 'رجوع',
@@ -151,6 +153,8 @@ export default async function RegisterPage({
                 usernameTaken: 'That handle is taken. Try:',
                 bio: 'Short bio (optional)',
                 bioHint: 'You can write this later from your dashboard.',
+                referralCode: 'Invite code (optional)',
+                referralCodeHint: 'If a coach invited you, enter their code — you both get a free month.',
                 reviewNotice:
                   'After signing up you will upload your certificates. An admin reviews and approves them before your account goes live, and you will be notified as soon as the review is done.',
                 back: 'Back',

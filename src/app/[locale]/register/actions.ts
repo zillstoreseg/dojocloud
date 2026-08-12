@@ -9,6 +9,7 @@ import { uploadFile, UploadError } from '@/lib/storage';
 import { getSetting } from '@/lib/settings';
 import { toActionError } from '@/lib/authz';
 import { countryLabel } from '@/lib/countries';
+import { resolveReferralCode } from '@/lib/referrals';
 import { registerSchema, type RegisterInput } from './schema';
 
 export interface RegisterResult {
@@ -48,6 +49,11 @@ export async function registerTrainer(input: RegisterInput): Promise<RegisterRes
 
     const passwordHash = await hashPassword(data.password);
 
+    // An invite code that no longer resolves is ignored rather than rejected:
+    // a mistyped code should not block a signup, and the person typing it has
+    // no way to tell a typo from a deleted account.
+    const referrer = data.referralCode ? await resolveReferralCode(data.referralCode) : null;
+
     // The account and profile are created together; the trainer then lands on
     // the certificate step, and stays PENDING until an admin approves.
     const trainer = await prisma.$transaction(async (tx) => {
@@ -76,6 +82,7 @@ export async function registerTrainer(input: RegisterInput): Promise<RegisterRes
           yearsExperience: data.yearsExperience,
           bio: data.bio || null,
           approvalStatus: 'PENDING',
+          referredById: referrer?.id ?? null,
         },
       });
     });

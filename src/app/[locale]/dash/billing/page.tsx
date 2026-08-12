@@ -6,9 +6,12 @@ import { requireTrainerStage } from '@/lib/trainer/gate';
 import { resolveFlags } from '@/lib/flags';
 import { getAllQuotas } from '@/lib/quota';
 import { daysRemaining } from '@/lib/billing';
+import { referralSummary } from '@/lib/referrals';
+import { publicEnv } from '@/lib/env';
 import { formatMoney, decimalToNumber, formatNumber, paymentMethodLabel, formatDate } from '@/lib/money';
 import { TrainerPage, TrainerSection } from '@/components/trainer/page-shell';
 import { QuotaGrid } from '@/components/trainer/quota-grid';
+import { ReferralCard } from '@/components/trainer/referral-card';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -64,6 +67,8 @@ export default async function BillingPage({
     getAllQuotas(user.trainerId),
     resolveFlags(user.id),
   ]);
+
+  const referral = await referralSummary(user.trainerId);
 
   const remaining = daysRemaining(subscription?.endsAt);
   const pendingPayment = payments.find((payment) => payment.status === 'PENDING');
@@ -256,6 +261,17 @@ export default async function BillingPage({
           </CardContent>
         </Card>
       </TrainerSection>
+
+      {referral.enabled && referral.rewardDays > 0 ? (
+        <ReferralCard
+          locale={locale}
+          code={referral.code}
+          rewardDays={referral.rewardDays}
+          invited={referral.invited}
+          rewarded={referral.rewarded}
+          signupUrl={`${publicEnv.appUrl.replace(/\/$/, '')}/${locale}/register?ref=${referral.code}`}
+        />
+      ) : null}
     </TrainerPage>
   );
 }

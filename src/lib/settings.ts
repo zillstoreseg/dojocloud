@@ -41,6 +41,26 @@ export const SETTING_DEFS = {
   'ai.input_price_per_mtok': { default: '5', secret: false, category: 'ai' },
   'ai.output_price_per_mtok': { default: '25', secret: false, category: 'ai' },
 
+  // Email
+  'email.provider': { default: 'none', secret: false, category: 'email' },
+  'email.from': { default: '', secret: false, category: 'email' },
+  'email.resend_api_key': { default: '', secret: true, category: 'email' },
+  'email.smtp_host': { default: '', secret: false, category: 'email' },
+  'email.smtp_port': { default: '587', secret: false, category: 'email' },
+  'email.smtp_user': { default: '', secret: false, category: 'email' },
+  'email.smtp_password': { default: '', secret: true, category: 'email' },
+  /// Which in-app notifications also go out as email.
+  'email.notify_types': {
+    default: 'ACCOUNT_APPROVED,ACCOUNT_REJECTED,PAYMENT_APPROVED,PAYMENT_REJECTED,SUBSCRIPTION_EXPIRING,SUBSCRIPTION_EXPIRED,TRAINEE_RENEWAL_DUE,NEW_LEAD',
+    secret: false,
+    category: 'email',
+  },
+
+  // Referrals
+  'referral.enabled': { default: 'true', secret: false, category: 'referral' },
+  /// Free days granted to each side when a referred coach starts paying.
+  'referral.reward_days': { default: '30', secret: false, category: 'referral' },
+
   // Coach payouts
   'payout.enabled': { default: 'true', secret: false, category: 'payout' },
   'payout.min_amount': { default: '500', secret: false, category: 'payout' },
@@ -64,13 +84,37 @@ export const SETTING_DEFS = {
 
 export type SettingKey = keyof typeof SETTING_DEFS;
 
+/**
+ * Reads a stored value, decrypting it when needed.
+ *
+ * A value that cannot be decrypted falls back to the default rather than
+ * throwing. The realistic cause is a rotated `SETTINGS_ENCRYPTION_KEY`, and the
+ * blast radius of throwing is out of all proportion to it: `getSettings` reads
+ * a whole category at once, so one unreadable row would take down every screen
+ * that touches that category — including the settings screen where an admin
+ * would go to fix it.
+ */
+function readValue(
+  row: { value: string; isEncrypted: boolean },
+  fallback: string,
+  key: string,
+): string {
+  if (!row.value) return fallback;
+  if (!row.isEncrypted) return row.value;
+  try {
+    return decryptSecret(row.value);
+  } catch {
+    console.error(`[settings] could not decrypt "${key}" — falling back to its default`);
+    return fallback;
+  }
+}
+
 /** Reads one setting, decrypting it when needed. Falls back to the default. */
 export async function getSetting(key: SettingKey): Promise<string> {
   const def = SETTING_DEFS[key];
   const row = await prisma.appSetting.findUnique({ where: { key } });
   if (!row) return def.default;
-  if (!row.value) return def.default;
-  return row.isEncrypted ? decryptSecret(row.value) : row.value;
+  return readValue(row, def.default, key);
 }
 
 /** Reads a whole category at once, e.g. all brand or all payment settings. */
@@ -86,7 +130,8 @@ export const getSettings = cache(async (category?: string): Promise<Record<strin
   }
   for (const row of rows) {
     if (category && row.category !== category) continue;
-    result[row.key] = row.isEncrypted && row.value ? decryptSecret(row.value) : row.value;
+    const def = SETTING_DEFS[row.key as SettingKey];
+    result[row.key] = readValue(row, def?.default ?? '', row.key);
   }
   return result;
 });

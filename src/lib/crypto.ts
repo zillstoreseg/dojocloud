@@ -16,8 +16,17 @@ export function encryptSecret(plain: string): string {
 }
 
 export function decryptSecret(payload: string): string {
-  const [ivHex, tagHex, dataHex] = payload.split(':');
-  if (!ivHex || !tagHex || !dataHex) throw new Error('Malformed encrypted value');
+  const parts = payload.split(':');
+  const [ivHex, tagHex, dataHex] = parts;
+
+  // The ciphertext of an empty string is an empty hex string, so `dataHex` is
+  // legitimately `''` for a cleared secret — checking it for truthiness would
+  // reject the value an admin produces every time they empty a key field, and
+  // take down every page that reads that setting.
+  if (parts.length !== 3 || !ivHex || !tagHex || dataHex === undefined) {
+    throw new Error('Malformed encrypted value');
+  }
+
   const decipher = createDecipheriv(ALGO, KEY, Buffer.from(ivHex, 'hex'));
   decipher.setAuthTag(Buffer.from(tagHex, 'hex'));
   return Buffer.concat([decipher.update(Buffer.from(dataHex, 'hex')), decipher.final()]).toString(
