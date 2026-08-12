@@ -59,6 +59,16 @@ export const intakeSchema = z.object({
   fullName: z.string().trim().min(2, 'اكتب اسمك بالكامل').max(120),
   phone: z.string().trim().min(6, 'اكتب رقم هاتف صحيح').max(30),
   email: z.string().trim().email('بريد غير صحيح').max(160).optional().or(z.literal('')),
+  /**
+   * Optional: choosing one opens the trainee portal.
+   *
+   * Not required, because plenty of trainees will only ever deal with their
+   * coach over the phone and forcing a password on them would lose the
+   * subscription at the last step. Enforced against the email in
+   * `intakeSchema`'s refinement below — a password with nowhere to sign in to
+   * is a dead end.
+   */
+  password: z.string().min(8, 'الباسورد لازم 8 حروف على الأقل').max(72).optional().or(z.literal('')),
   gender: z.enum(['MALE', 'FEMALE']),
   birthDate: z
     .string()
@@ -102,14 +112,18 @@ export const intakeSchema = z.object({
   workSchedule: z.string().trim().max(200).optional().or(z.literal('')),
   stressLevel: z.number().int().min(1).max(5),
   notes: z.string().trim().max(1000).optional().or(z.literal('')),
-});
+})
+  .refine((v) => !v.password || Boolean(v.email), {
+    message: 'محتاجين بريدك عشان تقدر تدخل بالباسورد ده',
+    path: ['email'],
+  });
 
 export type IntakeValues = z.infer<typeof intakeSchema>;
 export type IntakeInput = z.input<typeof intakeSchema>;
 
 /** Which fields belong to which wizard step, in order. */
 export const INTAKE_STEPS: (keyof IntakeInput)[][] = [
-  ['fullName', 'phone', 'email', 'gender', 'birthDate'],
+  ['fullName', 'phone', 'email', 'password', 'gender', 'birthDate'],
   ['heightCm', 'weightKg', 'goal', 'targetWeightKg'],
   [
     'activityLevel',
@@ -161,6 +175,7 @@ export const EMPTY_INTAKE: IntakeInput = {
   fullName: '',
   phone: '',
   email: '',
+  password: '',
   gender: 'MALE',
   birthDate: '',
   heightCm: 170,

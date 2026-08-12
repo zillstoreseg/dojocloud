@@ -745,6 +745,7 @@ model Trainee {
   conversations   Conversation[]
   convertedFrom   Lead[]
   intakes         TraineeIntake[]
+  foodScans       FoodScan[]
 
   @@index([trainerId, status])
   @@index([renewalDate])
@@ -1124,6 +1125,78 @@ model Measurement {
   createdAt DateTime @default(now())
 
   @@index([traineeId, takenAt])
+}
+
+enum ScanStatus {
+  PENDING
+  DONE
+  FAILED
+}
+
+enum MealVerdict {
+  FITS
+  OVER
+  UNDER
+  OFF_PLAN
+}
+
+/// A photographed meal, and what the platform made of it.
+///
+/// The model's job is only to read the picture: what is on the plate, roughly
+/// how much of it, and the macros. The verdict below is decided in code from
+/// the trainee's own targets, because "does this fit my goal" has to be
+/// explainable and testable, and a sentence from a language model is neither.
+model FoodScan {
+  id        String  @id @default(cuid())
+  traineeId String
+  trainee   Trainee @relation(fields: [traineeId], references: [id], onDelete: Cascade)
+  /// Denormalised so a coach can list their trainees' scans without a join,
+  /// and so the AI cost can be attributed to the coach who pays for it.
+  trainerId String
+
+  imageUrl String
+  thumbUrl String?
+  status   ScanStatus @default(PENDING)
+  mealType MealType?
+  title    String?
+
+  /// [{ name, grams, kcal, protein, carbs, fat, confidence }]
+  items      Json?
+  kcal       Int?
+  protein    Int?
+  carbs      Int?
+  fat        Int?
+  confidence Decimal? @db.Decimal(3, 2)
+
+  verdict         MealVerdict?
+  verdictReasonAr String?
+  verdictReasonEn String?
+
+  /// The numbers the verdict was computed against, kept so it can be explained
+  /// later even after the trainee's plan or weight has changed.
+  calorieBudgetAtScan Int?
+  consumedBeforeScan  Int?
+  nutritionPlanId     String?
+  aiUsageId           String?
+  errorMessage        String?
+
+  /// Set when the trainee accepts the reading and counts it against today.
+  /// A scan is a look, not an entry: the day's total only moves once they say
+  /// so, otherwise a curious photo of someone else's plate would ruin it.
+  loggedAt DateTime?
+
+  /// Raised by the trainee when the reading is wrong. Surfaces in the admin's
+  /// scan review so a systematically bad prompt shows up as a rate, not as a
+  /// story someone tells.
+  reportedAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([traineeId, createdAt])
+  @@index([traineeId, loggedAt])
+  @@index([trainerId, createdAt])
+  @@index([status])
 }
 
 model Conversation {

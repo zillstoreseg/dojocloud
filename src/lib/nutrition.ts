@@ -203,6 +203,13 @@ export function judgeMeal(input: VerdictInput): VerdictResult {
     return { verdict: 'OFF_PLAN', remainingAfter, expectedShare, deviation };
   }
 
+  // With no target there is nothing to be over or under. Without this, a
+  // trainee whose profile is missing a height would be told every single meal
+  // blew a budget of zero — an accusation made out of missing data.
+  if (input.dailyTarget <= 0) {
+    return { verdict: 'FITS', remainingAfter: 0, expectedShare: 0, deviation: 0 };
+  }
+
   // Blowing the whole day's budget is over regardless of how this single meal
   // compares to its own share.
   if (remainingAfter < 0) {

@@ -36,6 +36,13 @@ const TRAINER_NAV: { labelAr: string; labelEn: string; items: TrainerNavItem[] }
       { href: '/dash/programs', labelAr: 'البرامج', labelEn: 'Programs', icon: 'ClipboardList' },
       { href: '/dash/nutrition', labelAr: 'أنظمة التغذية', labelEn: 'Nutrition', icon: 'Apple' },
       {
+        href: '/dash/ai',
+        labelAr: 'المساعد الذكي',
+        labelEn: 'AI assistant',
+        icon: 'Sparkles',
+        flag: FLAG_KEYS.AI_WORKOUT,
+      },
+      {
         href: '/dash/messages',
         labelAr: 'الرسائل',
         labelEn: 'Messages',

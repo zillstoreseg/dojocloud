@@ -270,6 +270,21 @@ export function JoinWizard({
                       />
                     </Field>
                   </div>
+                  <Field
+                    label={L.password}
+                    htmlFor="j-pass"
+                    hint={L.passwordHint}
+                    error={errors.password}
+                  >
+                    <Input
+                      id="j-pass"
+                      dir="ltr"
+                      type="password"
+                      autoComplete="new-password"
+                      value={values.password ?? ''}
+                      onChange={(e) => set('password', e.target.value)}
+                    />
+                  </Field>
                   <Field label={L.gender} required error={errors.gender}>
                     <ChipRadio
                       value={values.gender}

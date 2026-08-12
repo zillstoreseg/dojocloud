@@ -73,6 +73,7 @@ export const ADMIN_NAV: AdminNavSection[] = [
     items: [
       { href: '/admin/library/exercises', labelAr: 'مكتبة التمارين', labelEn: 'Exercise library', icon: 'ListChecks', permission: 'library.write' },
       { href: '/admin/library/foods', labelAr: 'مكتبة الأطعمة', labelEn: 'Food library', icon: 'Apple', permission: 'library.write' },
+      { href: '/admin/food-scans', labelAr: 'تحليلات صور الأكل', labelEn: 'Food scans', icon: 'Camera', permission: 'analytics.ai' },
       { href: '/admin/pages', labelAr: 'صفحات المدربين', labelEn: 'Trainer pages', icon: 'Globe', permission: 'pages.read', badgeKey: 'pages' },
       { href: '/admin/leads', labelAr: 'العملاء المحتملون', labelEn: 'Leads', icon: 'UserPlus', permission: 'leads.read', comingSoon: true },
       { href: '/admin/static-pages', labelAr: 'الصفحات الثابتة', labelEn: 'Static pages', icon: 'FileText', permission: 'content.write', comingSoon: true },

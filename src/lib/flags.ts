@@ -10,6 +10,9 @@ export const FLAG_KEYS = {
   AI_WORKOUT: 'ai.workout_generation',
   AI_NUTRITION: 'ai.nutrition_generation',
   AI_PROGRESS_SUMMARY: 'ai.progress_summary',
+  AI_FOOD_SCAN: 'ai.food_scan',
+  /** LIMIT flag: how many meals one trainee may photograph per day. */
+  AI_FOOD_SCAN_DAILY: 'ai.food_scan.daily',
   BUILDER: 'builder.enabled',
   BUILDER_CUSTOM_HTML: 'builder.custom_html',
   BUILDER_REMOVE_BRANDING: 'builder.remove_branding',

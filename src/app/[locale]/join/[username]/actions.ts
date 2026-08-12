@@ -2,6 +2,7 @@
 
 import { headers } from 'next/headers';
 import { z } from 'zod';
+import bcrypt from 'bcryptjs';
 import { prisma } from '@/lib/prisma';
 import { notify } from '@/lib/audit';
 import { uploadFile, UploadError } from '@/lib/storage';
@@ -67,9 +68,37 @@ export async function submitJoin(input: {
       goal: nutritionGoal(intake.goal),
     });
 
+    // A trainee who chose a password gets a login. Checked before the
+    // transaction opens so a taken address fails as a message rather than as a
+    // unique-constraint violation half way through creating their profile.
+    const email = intake.email?.trim().toLowerCase() || null;
+    const wantsAccount = Boolean(intake.password && email);
+    if (wantsAccount) {
+      const taken = await prisma.user.findUnique({ where: { email: email! }, select: { id: true } });
+      if (taken) {
+        return { ok: false, error: 'البريد ده مسجّل عندنا — سجّل دخولك أو استخدم بريد تاني' };
+      }
+    }
+
+    const passwordHash = wantsAccount ? await bcrypt.hash(intake.password!, 12) : null;
+
     const result = await prisma.$transaction(async (tx) => {
+      const account = passwordHash
+        ? await tx.user.create({
+            data: {
+              email: email!,
+              phone: intake.phone,
+              passwordHash,
+              role: 'TRAINEE',
+              locale: 'ar',
+            },
+            select: { id: true },
+          })
+        : null;
+
       const trainee = await tx.trainee.create({
         data: {
+          userId: account?.id ?? null,
           trainerId: trainer.id,
           fullName: intake.fullName,
           phone: intake.phone,
