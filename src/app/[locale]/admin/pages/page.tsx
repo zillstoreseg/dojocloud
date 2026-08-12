@@ -4,7 +4,7 @@ import { ExternalLink } from 'lucide-react';
 import { requireAdminPage } from '@/lib/authz';
 import { prisma } from '@/lib/prisma';
 import { parseListParams, paginationArgs, orderByArgs, pageMeta } from '@/lib/list-params';
-import { formatNumber } from '@/lib/money';
+import { formatNumber, formatDate } from '@/lib/money';
 import { AdminPage, AdminTableCard } from '@/components/admin/page-shell';
 import { DataTableToolbar } from '@/components/data-table/toolbar';
 import { DataTablePagination, SortableHeader } from '@/components/data-table/pagination';
@@ -72,7 +72,6 @@ export default async function AdminPagesPage({
   ]);
 
   const meta = pageMeta(listParams, total);
-  const dateFmt = isAr ? 'ar-EG-u-nu-latn' : 'en-US';
 
   return (
     <AdminPage
@@ -175,7 +174,7 @@ export default async function AdminPagesPage({
                       {Math.round(rate * 100)}%
                     </TableCell>
                     <TableCell className="whitespace-nowrap text-sm tabular-nums text-muted-foreground">
-                      {row.publishedAt ? row.publishedAt.toLocaleDateString(dateFmt) : '—'}
+                      {formatDate(row.publishedAt, locale)}
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center justify-end gap-1">

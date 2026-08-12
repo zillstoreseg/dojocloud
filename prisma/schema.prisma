@@ -341,6 +341,7 @@ model TrainerProfile {
   usernameHistory UsernameHistory[]
   pageViews       PageView[]
   conversations   Conversation[]
+  wallet          Wallet?
 
   @@index([approvalStatus])
   @@index([isFeatured, isListed])
@@ -348,6 +349,128 @@ model TrainerProfile {
   // The directory's default ordering: featured first, then most subscribed.
   @@index([approvalStatus, isListed, isFeatured, activeTraineesCount])
   @@index([yearsExperience])
+}
+
+// ────────────────────────────────────────────────── wallet & payouts ──
+
+/// A coach's money on the platform.
+///
+/// The two balances are held separately because they mean different things:
+/// `pendingBalance` is earned but still inside the dispute-hold window (and
+/// also holds the amount reserved by an open payout request), `balance` is
+/// what can be withdrawn right now. Both are derived — see WalletTransaction.
+model Wallet {
+  id        String         @id @default(cuid())
+  trainerId String         @unique
+  trainer   TrainerProfile @relation(fields: [trainerId], references: [id], onDelete: Cascade)
+
+  currency String @default("EGP")
+
+  balance          Decimal @default(0) @db.Decimal(14, 2)
+  pendingBalance   Decimal @default(0) @db.Decimal(14, 2)
+  lifetimeEarned   Decimal @default(0) @db.Decimal(14, 2)
+  lifetimeWithdrawn Decimal @default(0) @db.Decimal(14, 2)
+
+  /// Set by an admin during a dispute; blocks new payout requests.
+  isFrozen   Boolean @default(false)
+  freezeNote String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  transactions   WalletTransaction[]
+  payoutRequests PayoutRequest[]
+}
+
+enum WalletTxType {
+  /// Trainee payment landed, net of platform commission.
+  CREDIT
+  /// Hold window elapsed: pending → available.
+  HOLD_RELEASE
+  /// The platform's cut, recorded for the profit report. Never hits a balance.
+  COMMISSION_FEE
+  /// Money leaving on an approved payout.
+  PAYOUT
+  /// A payout that was rejected or a refund reversing a credit.
+  REVERSAL
+  /// Manual correction by an admin, with a mandatory reason.
+  ADJUSTMENT
+}
+
+/// Append-only ledger. Rows are never updated and never deleted; a mistake is
+/// corrected with an opposing ADJUSTMENT so the history stays auditable.
+/// Invariant, tested: balance + pendingBalance == Σ(amount) over all rows that
+/// move money (COMMISSION_FEE is informational and excluded).
+model WalletTransaction {
+  id       String @id @default(cuid())
+  walletId String
+  wallet   Wallet @relation(fields: [walletId], references: [id], onDelete: Cascade)
+
+  type     WalletTxType
+  /// Signed: positive adds to the coach's money, negative takes it away.
+  amount   Decimal      @db.Decimal(14, 2)
+  currency String
+
+  /// Balance snapshot after this entry, so a statement never has to re-add.
+  balanceAfter        Decimal @db.Decimal(14, 2)
+  pendingBalanceAfter Decimal @db.Decimal(14, 2)
+
+  /// When a CREDIT's amount becomes withdrawable. Null once released.
+  availableAt DateTime?
+  releasedAt  DateTime?
+
+  refType String?
+  refId   String?
+  note    String?
+
+  createdById String?
+  createdAt   DateTime @default(now())
+
+  @@index([walletId, createdAt])
+  @@index([type, availableAt])
+  @@index([refType, refId])
+}
+
+enum PayoutMethod {
+  BANK
+  INSTAPAY
+  VODAFONE_CASH
+  WISE
+  OTHER
+}
+
+enum PayoutStatus {
+  PENDING
+  APPROVED
+  PAID
+  REJECTED
+}
+
+model PayoutRequest {
+  id       String @id @default(cuid())
+  walletId String
+  wallet   Wallet @relation(fields: [walletId], references: [id], onDelete: Cascade)
+
+  amount   Decimal      @db.Decimal(14, 2)
+  currency String
+  method   PayoutMethod
+
+  /// Bank/wallet details, encrypted at rest — decrypted only when an admin
+  /// opens the request, and that read is written to the audit log.
+  destination String
+
+  status       PayoutStatus @default(PENDING)
+  adminNote    String?
+  proofUrl     String?
+  reviewedById String?
+  reviewedAt   DateTime?
+  paidAt       DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([walletId, status])
+  @@index([status, createdAt])
 }
 
 /// Keeps old handles resolvable with a 301 after a username change.

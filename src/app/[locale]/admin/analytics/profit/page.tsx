@@ -3,6 +3,7 @@ import { AlertTriangle } from 'lucide-react';
 import { requireAdminPage } from '@/lib/authz';
 import { parseListParams } from '@/lib/list-params';
 import { getPlanProfit, getUnprofitableTrainers, rangeOrDefault, getOverviewStats } from '@/lib/admin/analytics';
+import { totalLiabilities } from '@/lib/wallet';
 import { AdminPage, AdminSection } from '@/components/admin/page-shell';
 import { StatCard } from '@/components/admin/stat-card';
 import { SignedBarChart } from '@/components/charts/charts';
@@ -34,10 +35,11 @@ export default async function ProfitPage({
   const listParams = parseListParams(sp);
   const range = rangeOrDefault(listParams.from, listParams.to, 30);
 
-  const [planProfit, unprofitable, overview] = await Promise.all([
+  const [planProfit, unprofitable, overview, liabilities] = await Promise.all([
     getPlanProfit(range),
     getUnprofitableTrainers(range),
     getOverviewStats(range),
+    totalLiabilities(),
   ]);
 
   const totals = planProfit.reduce(
@@ -76,6 +78,32 @@ export default async function ProfitPage({
           sublabel={isAr ? `هامش ${totalMargin}%` : `${totalMargin}% margin`}
         />
       </div>
+
+      {/* Wallet balances are cash the platform holds for its coaches. It sits in
+          the same bank account as the revenue and is easy to mistake for it, so
+          it is stated here rather than left for someone to work out. */}
+      <Card>
+        <CardContent className="flex flex-wrap items-center justify-between gap-6 p-5">
+          <div>
+            <p className="text-sm text-muted-foreground">
+              {isAr ? 'التزامات المحفظة (مستحقة للمدربين)' : 'Wallet liabilities (owed to coaches)'}
+            </p>
+            <p className="font-display text-2xl font-bold tabular-nums text-warning">
+              {money(liabilities.available + liabilities.pending, locale, 0)}
+            </p>
+            <p className="mt-1 text-xs text-muted-foreground">
+              {isAr
+                ? `${money(liabilities.available, locale, 0)} متاح للسحب · ${money(liabilities.pending, locale, 0)} محجوز`
+                : `${money(liabilities.available, locale, 0)} withdrawable · ${money(liabilities.pending, locale, 0)} on hold`}
+            </p>
+          </div>
+          <p className="max-w-md text-xs text-muted-foreground">
+            {isAr
+              ? 'المبلغ ده محصَّل فعلًا لكنه مش ربح — هو فلوس المدربين محفوظة عندنا لحد ما يسحبوها، ولازم يتطرح من السيولة المتاحة.'
+              : 'Collected but not earned: this is coaches\u2019 money held on their behalf, and it should be subtracted from available cash.'}
+          </p>
+        </CardContent>
+      </Card>
 
       {chartData.length > 0 ? (
         <AdminSection title={isAr ? 'صافي الربح لكل خطة' : 'Net profit by plan'}>

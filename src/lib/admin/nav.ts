@@ -7,7 +7,7 @@ export interface AdminNavItem {
   icon: string;
   permission?: Permission;
   /** Key into the pending-counts map, rendered as a badge in the sidebar. */
-  badgeKey?: 'trainers' | 'certificates' | 'payments' | 'pages' | 'traineePayments';
+  badgeKey?: 'trainers' | 'certificates' | 'payments' | 'pages' | 'traineePayments' | 'payouts';
   /**
    * The screen is not built yet. Kept in the tree so the panel's shape is
    * honest about what is planned, but rendered inert instead of as a link
@@ -63,6 +63,7 @@ export const ADMIN_NAV: AdminNavSection[] = [
       { href: '/admin/plans', labelAr: 'الخطط والأسعار', labelEn: 'Plans & pricing', icon: 'Layers', permission: 'plans.read' },
       { href: '/admin/subscriptions', labelAr: 'الاشتراكات', labelEn: 'Subscriptions', icon: 'CalendarClock', permission: 'subscriptions.read', comingSoon: true },
       { href: '/admin/payments', labelAr: 'المدفوعات', labelEn: 'Payments', icon: 'Receipt', permission: 'payments.read', badgeKey: 'payments' },
+      { href: '/admin/payouts', labelAr: 'المحفظة والسحوبات', labelEn: 'Wallets & payouts', icon: 'Wallet', permission: 'payouts.read', badgeKey: 'payouts' },
       { href: '/admin/coupons', labelAr: 'الكوبونات', labelEn: 'Coupons', icon: 'Ticket', permission: 'coupons.write', comingSoon: true },
     ],
   },

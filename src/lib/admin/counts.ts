@@ -6,6 +6,7 @@ export interface PendingCounts {
   certificates: number;
   payments: number;
   traineePayments: number;
+  payouts: number;
   pages: number;
   total: number;
 }
@@ -15,11 +16,12 @@ export interface PendingCounts {
  * activations centre tab counters.
  */
 export const getPendingCounts = cache(async (): Promise<PendingCounts> => {
-  const [trainers, certificates, payments, traineePayments, pages] = await Promise.all([
+  const [trainers, certificates, payments, traineePayments, payouts, pages] = await Promise.all([
     prisma.trainerProfile.count({ where: { approvalStatus: 'PENDING' } }),
     prisma.certificate.count({ where: { status: 'PENDING' } }),
     prisma.payment.count({ where: { status: 'PENDING' } }),
     prisma.traineeSubscription.count({ where: { status: 'PENDING' } }),
+    prisma.payoutRequest.count({ where: { status: 'PENDING' } }),
     prisma.landingPage.count({ where: { status: 'PUBLISHED', trainer: { approvalStatus: 'PENDING' } } }),
   ]);
 
@@ -28,7 +30,8 @@ export const getPendingCounts = cache(async (): Promise<PendingCounts> => {
     certificates,
     payments,
     traineePayments,
+    payouts,
     pages,
-    total: trainers + certificates + payments + traineePayments,
+    total: trainers + certificates + payments + traineePayments + payouts,
   };
 });

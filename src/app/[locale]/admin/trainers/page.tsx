@@ -12,7 +12,7 @@ import { Badge, statusVariant } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Link } from '@/i18n/navigation';
 import { initials } from '@/lib/utils';
-import { formatNumber } from '@/lib/money';
+import { formatNumber, formatDate } from '@/lib/money';
 import { TrainerRowActions } from './row-actions';
 
 const SORTABLE = ['createdAt', 'fullName', 'yearsExperience', 'country'] as const;
@@ -160,7 +160,7 @@ export default async function AdminTrainersPage({
                           {sub.endsAt ? (
                             <p className="text-xs text-muted-foreground">
                               {isAr ? 'حتى' : 'until'}{' '}
-                              {sub.endsAt.toLocaleDateString(isAr ? 'ar-EG-u-nu-latn' : 'en-US')}
+                              {formatDate(sub.endsAt, locale)}
                             </p>
                           ) : null}
                         </div>
@@ -179,7 +179,7 @@ export default async function AdminTrainersPage({
                       </Badge>
                     </TableCell>
                     <TableCell className="whitespace-nowrap text-xs text-muted-foreground">
-                      {trainer.createdAt.toLocaleDateString(isAr ? 'ar-EG-u-nu-latn' : 'en-US')}
+                      {formatDate(trainer.createdAt, locale)}
                     </TableCell>
                     <TableCell>
                       <TrainerRowActions

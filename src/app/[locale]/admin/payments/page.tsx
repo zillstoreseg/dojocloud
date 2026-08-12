@@ -10,7 +10,7 @@ import { StatCard } from '@/components/admin/stat-card';
 import { Table, TableBody, TableCell, TableEmpty, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge, statusVariant } from '@/components/ui/badge';
 import { Link } from '@/i18n/navigation';
-import { formatMoney, decimalToNumber, toUsd } from '@/lib/money';
+import { formatMoney, decimalToNumber, toUsd, formatDate } from '@/lib/money';
 import { PaymentRowActions } from './row-actions';
 
 export default async function AdminPaymentsPage({
@@ -130,7 +130,7 @@ export default async function AdminPaymentsPage({
               rows.map((payment) => (
                 <TableRow key={payment.id}>
                   <TableCell className="whitespace-nowrap text-xs text-muted-foreground">
-                    {payment.createdAt.toLocaleDateString(isAr ? 'ar-EG-u-nu-latn' : 'en-US')}
+                    {formatDate(payment.createdAt, locale)}
                   </TableCell>
                   <TableCell>
                     <Link

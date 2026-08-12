@@ -6,7 +6,7 @@ import { requireTrainerStage } from '@/lib/trainer/gate';
 import { resolveFlags } from '@/lib/flags';
 import { getAllQuotas } from '@/lib/quota';
 import { daysRemaining } from '@/lib/billing';
-import { formatMoney, decimalToNumber, formatNumber, paymentMethodLabel } from '@/lib/money';
+import { formatMoney, decimalToNumber, formatNumber, paymentMethodLabel, formatDate } from '@/lib/money';
 import { TrainerPage, TrainerSection } from '@/components/trainer/page-shell';
 import { QuotaGrid } from '@/components/trainer/quota-grid';
 import { Card, CardContent } from '@/components/ui/card';
@@ -199,7 +199,7 @@ export default async function BillingPage({
                   payments.map((payment) => (
                     <TableRow key={payment.id}>
                       <TableCell className="whitespace-nowrap text-sm tabular-nums">
-                        {payment.createdAt.toLocaleDateString(isAr ? 'ar-EG-u-nu-latn' : 'en-US')}
+                        {formatDate(payment.createdAt, locale)}
                       </TableCell>
                       <TableCell className="tabular-nums">
                         {formatMoney(decimalToNumber(payment.amount), payment.currency, locale)}

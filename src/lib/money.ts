@@ -67,6 +67,46 @@ export function formatMoney(
   }).format(value);
 }
 
+/**
+ * A date, rendered the same way in both languages.
+ *
+ * `toLocaleDateString('ar-EG-…')` emits day/month/year with an embedded U+200F
+ * between each part. Those marks are correct in isolation, but in a table cell
+ * they let the bidi algorithm reorder the parts against neighbouring text, and
+ * a date that reads "12/8/2026" in one column and "122026/8/" in another is
+ * worse than one that is simply unambiguous. So the parts are ordered here and
+ * joined with a plain separator, with no directional marks at all.
+ */
+export function formatDate(value: Date | string | null | undefined, locale = 'ar'): string {
+  if (!value) return '—';
+  const date = typeof value === 'string' ? new Date(value) : value;
+  if (Number.isNaN(date.getTime())) return '—';
+
+  const parts = new Intl.DateTimeFormat(locale === 'ar' ? 'en-GB' : 'en-GB', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).formatToParts(date);
+
+  const get = (type: string) => parts.find((part) => part.type === type)?.value ?? '';
+  // Day/month/year reads naturally in Arabic and in most of the target market;
+  // it is written out explicitly rather than left to the locale.
+  return `${get('day')}/${get('month')}/${get('year')}`;
+}
+
+/** Date plus time, for audit-style rows where the hour matters. */
+export function formatDateTime(value: Date | string | null | undefined, locale = 'ar'): string {
+  if (!value) return '—';
+  const date = typeof value === 'string' ? new Date(value) : value;
+  if (Number.isNaN(date.getTime())) return '—';
+  const time = new Intl.DateTimeFormat('en-GB', {
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+  }).format(date);
+  return `${formatDate(date, locale)} · ${time}`;
+}
+
 export function formatNumber(value: number, locale = 'ar'): string {
   return new Intl.NumberFormat(locale === 'ar' ? AR_LOCALE : 'en-US').format(value);
 }

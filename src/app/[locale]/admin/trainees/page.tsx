@@ -2,6 +2,7 @@ import { setRequestLocale } from 'next-intl/server';
 import type { Prisma } from '@prisma/client';
 import { requireAdminPage } from '@/lib/authz';
 import { prisma } from '@/lib/prisma';
+import { formatDate } from '@/lib/money';
 import { parseListParams, paginationArgs, orderByArgs, pageMeta } from '@/lib/list-params';
 import { GOAL_LABELS, TRAINEE_STATUS_LABELS, label as pickLabel } from '@/lib/training';
 import { AdminPage, AdminTableCard } from '@/components/admin/page-shell';
@@ -62,7 +63,6 @@ export default async function AdminTraineesPage({
   ]);
 
   const meta = pageMeta(listParams, total);
-  const dateFmt = isAr ? 'ar-EG-u-nu-latn' : 'en-US';
 
   return (
     <AdminPage
@@ -150,7 +150,7 @@ export default async function AdminTraineesPage({
                     </Badge>
                   </TableCell>
                   <TableCell className="whitespace-nowrap text-sm tabular-nums text-muted-foreground">
-                    {row.renewalDate ? row.renewalDate.toLocaleDateString(dateFmt) : '—'}
+                    {formatDate(row.renewalDate, locale)}
                   </TableCell>
                 </TableRow>
               ))

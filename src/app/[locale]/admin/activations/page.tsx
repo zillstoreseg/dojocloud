@@ -4,7 +4,7 @@ import { requireAdminPage } from '@/lib/authz';
 import { countryLabel } from '@/lib/countries';
 import { prisma } from '@/lib/prisma';
 import { getPendingCounts } from '@/lib/admin/counts';
-import { formatMoney, decimalToNumber } from '@/lib/money';
+import { formatMoney, decimalToNumber, formatDate } from '@/lib/money';
 import { AdminPage } from '@/components/admin/page-shell';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -243,7 +243,7 @@ export default async function ActivationsPage({
                       <p className="text-xs text-muted-foreground">
                         {payment.method}
                         {payment.reference ? ` · ${payment.reference}` : ''} ·{' '}
-                        {payment.createdAt.toLocaleDateString(isAr ? 'ar-EG-u-nu-latn' : 'en-US')}
+                        {formatDate(payment.createdAt, locale)}
                       </p>
                       {payment.payerNote ? (
                         <p className="rounded bg-muted/50 p-2 text-sm">{payment.payerNote}</p>

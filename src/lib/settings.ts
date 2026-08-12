@@ -41,6 +41,19 @@ export const SETTING_DEFS = {
   'ai.input_price_per_mtok': { default: '5', secret: false, category: 'ai' },
   'ai.output_price_per_mtok': { default: '25', secret: false, category: 'ai' },
 
+  // Coach payouts
+  'payout.enabled': { default: 'true', secret: false, category: 'payout' },
+  'payout.min_amount': { default: '500', secret: false, category: 'payout' },
+  'payout.max_per_request': { default: '20000', secret: false, category: 'payout' },
+  'payout.max_per_month': { default: '50000', secret: false, category: 'payout' },
+  /// Days a credit sits in `pendingBalance` before it can be withdrawn.
+  'payout.hold_days': { default: '7', secret: false, category: 'payout' },
+  'payout.methods': {
+    default: 'BANK,INSTAPAY,VODAFONE_CASH,WISE',
+    secret: false,
+    category: 'payout',
+  },
+
   // SEO
   'seo.title_ar': { default: '', secret: false, category: 'seo' },
   'seo.title_en': { default: '', secret: false, category: 'seo' },

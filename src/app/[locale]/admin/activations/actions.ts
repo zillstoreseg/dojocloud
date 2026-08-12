@@ -6,9 +6,10 @@ import { prisma } from '@/lib/prisma';
 import { requireAdmin, toActionError } from '@/lib/authz';
 import { audit, notify } from '@/lib/audit';
 import { syncDirectoryCounters } from '@/lib/directory';
+import { creditTraineePayment } from '@/lib/wallet';
 import { addInterval } from '@/lib/utils';
 import { resetCounters } from '@/lib/quota';
-import { decimalToNumber } from '@/lib/money';
+import { decimalToNumber, formatMoney } from '@/lib/money';
 
 export interface ActionResult {
   ok: boolean;
@@ -350,6 +351,37 @@ export async function reviewTraineeSubscription(input: {
 
     // A new active trainee changes the coach's headline number in the directory.
     await syncDirectoryCounters(sub.trainee.trainerId);
+
+    // This is the moment the platform stops merely organising the coach's work
+    // and starts collecting their money: the net lands in their wallet, held
+    // for the dispute window, and the commission is booked separately for the
+    // profit report. Idempotent, so a double-click cannot pay twice.
+    const credited = await creditTraineePayment({
+      trainerId: sub.trainee.trainerId,
+      subscriptionId: sub.id,
+      amount: sub.amount,
+      commission: commissionAmount,
+      currency: sub.currency,
+      createdById: admin.id,
+    });
+
+    if (credited) {
+      const trainer = await prisma.trainerProfile.findUnique({
+        where: { id: sub.trainee.trainerId },
+        select: { userId: true },
+      });
+      if (trainer) {
+        await notify({
+          userId: trainer.userId,
+          type: 'PAYMENT_APPROVED',
+          titleAr: 'دخل حسابك فلوس 💰',
+          titleEn: 'Money landed in your wallet 💰',
+          bodyAr: `${formatMoney(Number(credited.net), sub.currency, 'ar')} من اشتراك ${sub.trainee.fullName} — متاح للسحب ${credited.availableAt.toLocaleDateString('ar-EG-u-nu-latn')}`,
+          bodyEn: `${formatMoney(Number(credited.net), sub.currency, 'en')} from ${sub.trainee.fullName} — withdrawable on ${credited.availableAt.toLocaleDateString('en-US')}`,
+          link: '/dash/wallet',
+        });
+      }
+    }
 
     if (sub.trainee.userId) {
       await notify({

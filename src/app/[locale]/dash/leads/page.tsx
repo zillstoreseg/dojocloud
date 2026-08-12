@@ -9,7 +9,7 @@ import { DataTablePagination } from '@/components/data-table/pagination';
 import { EmptyState } from '@/components/ui/empty-state';
 import { StatRing } from '@/components/ui/stat-ring';
 import { Card, CardContent } from '@/components/ui/card';
-import { formatNumber } from '@/lib/money';
+import { formatNumber, formatDate } from '@/lib/money';
 import { LeadList, type LeadRow } from './lead-list';
 
 const SORTABLE = ['createdAt', 'name', 'status'] as const;
@@ -85,7 +85,7 @@ export default async function LeadsPage({
     status: lead.status,
     source: lead.source,
     convertedTraineeId: lead.convertedTraineeId,
-    createdAt: lead.createdAt.toLocaleDateString(isAr ? 'ar-EG-u-nu-latn' : 'en-US'),
+    createdAt: formatDate(lead.createdAt, locale),
   }));
 
   return (

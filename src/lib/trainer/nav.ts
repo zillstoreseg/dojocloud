@@ -70,7 +70,7 @@ const TRAINER_NAV: { labelAr: string; labelEn: string; items: TrainerNavItem[] }
     labelAr: 'الحساب',
     labelEn: 'Account',
     items: [
-      { href: '/dash/wallet', labelAr: 'المحفظة', labelEn: 'Wallet', icon: 'Wallet', comingSoon: true },
+      { href: '/dash/wallet', labelAr: 'المحفظة', labelEn: 'Wallet', icon: 'Wallet' },
       { href: '/dash/billing', labelAr: 'الاشتراك والفوترة', labelEn: 'Plan & billing', icon: 'CreditCard' },
       { href: '/dash/settings', labelAr: 'الإعدادات', labelEn: 'Settings', icon: 'Settings', comingSoon: true },
     ],

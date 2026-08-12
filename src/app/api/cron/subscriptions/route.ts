@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma';
 import { notify } from '@/lib/audit';
 import { env } from '@/lib/env';
 import { daysRemaining } from '@/lib/billing';
+import { releaseMatured } from '@/lib/wallet';
 
 /**
  * Daily subscription maintenance: expire what has run out, and warn the people
@@ -101,5 +102,10 @@ export async function POST(request: Request) {
     reminders += 1;
   }
 
-  return NextResponse.json({ ok: true, expired: expiring.length, reminders });
+  // ── 3. Release wallet holds that have matured ───────────────────────────
+  // Coaches also get a lazy release when they open their wallet, so a missed
+  // run delays the ledger entry rather than the coach's money.
+  const released = await releaseMatured().catch(() => 0);
+
+  return NextResponse.json({ ok: true, expired: expiring.length, reminders, released });
 }
