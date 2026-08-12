@@ -8,6 +8,12 @@ export interface AdminNavItem {
   permission?: Permission;
   /** Key into the pending-counts map, rendered as a badge in the sidebar. */
   badgeKey?: 'trainers' | 'certificates' | 'payments' | 'pages' | 'traineePayments';
+  /**
+   * The screen is not built yet. Kept in the tree so the panel's shape is
+   * honest about what is planned, but rendered inert instead of as a link
+   * that 404s. Remove the flag in the phase that builds the screen.
+   */
+  comingSoon?: boolean;
 }
 
 export interface AdminNavSection {
@@ -46,8 +52,8 @@ export const ADMIN_NAV: AdminNavSection[] = [
     items: [
       { href: '/admin/trainers', labelAr: 'المدربون', labelEn: 'Trainers', icon: 'Dumbbell', permission: 'trainers.read' },
       { href: '/admin/trainees', labelAr: 'المتدربون', labelEn: 'Trainees', icon: 'Users', permission: 'trainees.read' },
-      { href: '/admin/users', labelAr: 'كل الحسابات', labelEn: 'All accounts', icon: 'UserCog', permission: 'users.read' },
-      { href: '/admin/roles', labelAr: 'الأدوار والصلاحيات', labelEn: 'Roles', icon: 'ShieldCheck', permission: 'roles.write' },
+      { href: '/admin/users', labelAr: 'كل الحسابات', labelEn: 'All accounts', icon: 'UserCog', permission: 'users.read', comingSoon: true },
+      { href: '/admin/roles', labelAr: 'الأدوار والصلاحيات', labelEn: 'Roles', icon: 'ShieldCheck', permission: 'roles.write', comingSoon: true },
     ],
   },
   {
@@ -55,9 +61,9 @@ export const ADMIN_NAV: AdminNavSection[] = [
     labelEn: 'Money',
     items: [
       { href: '/admin/plans', labelAr: 'الخطط والأسعار', labelEn: 'Plans & pricing', icon: 'Layers', permission: 'plans.read' },
-      { href: '/admin/subscriptions', labelAr: 'الاشتراكات', labelEn: 'Subscriptions', icon: 'CalendarClock', permission: 'subscriptions.read' },
+      { href: '/admin/subscriptions', labelAr: 'الاشتراكات', labelEn: 'Subscriptions', icon: 'CalendarClock', permission: 'subscriptions.read', comingSoon: true },
       { href: '/admin/payments', labelAr: 'المدفوعات', labelEn: 'Payments', icon: 'Receipt', permission: 'payments.read', badgeKey: 'payments' },
-      { href: '/admin/coupons', labelAr: 'الكوبونات', labelEn: 'Coupons', icon: 'Ticket', permission: 'coupons.write' },
+      { href: '/admin/coupons', labelAr: 'الكوبونات', labelEn: 'Coupons', icon: 'Ticket', permission: 'coupons.write', comingSoon: true },
     ],
   },
   {
@@ -66,10 +72,10 @@ export const ADMIN_NAV: AdminNavSection[] = [
     items: [
       { href: '/admin/library/exercises', labelAr: 'مكتبة التمارين', labelEn: 'Exercise library', icon: 'ListChecks', permission: 'library.write' },
       { href: '/admin/library/foods', labelAr: 'مكتبة الأطعمة', labelEn: 'Food library', icon: 'Apple', permission: 'library.write' },
-      { href: '/admin/pages', labelAr: 'صفحات المدربين', labelEn: 'Trainer pages', icon: 'Globe', permission: 'pages.read', badgeKey: 'pages' },
-      { href: '/admin/leads', labelAr: 'العملاء المحتملون', labelEn: 'Leads', icon: 'UserPlus', permission: 'leads.read' },
-      { href: '/admin/static-pages', labelAr: 'الصفحات الثابتة', labelEn: 'Static pages', icon: 'FileText', permission: 'content.write' },
-      { href: '/admin/announcements', labelAr: 'الإعلانات', labelEn: 'Announcements', icon: 'Megaphone', permission: 'content.write' },
+      { href: '/admin/pages', labelAr: 'صفحات المدربين', labelEn: 'Trainer pages', icon: 'Globe', permission: 'pages.read', badgeKey: 'pages', comingSoon: true },
+      { href: '/admin/leads', labelAr: 'العملاء المحتملون', labelEn: 'Leads', icon: 'UserPlus', permission: 'leads.read', comingSoon: true },
+      { href: '/admin/static-pages', labelAr: 'الصفحات الثابتة', labelEn: 'Static pages', icon: 'FileText', permission: 'content.write', comingSoon: true },
+      { href: '/admin/announcements', labelAr: 'الإعلانات', labelEn: 'Announcements', icon: 'Megaphone', permission: 'content.write', comingSoon: true },
     ],
   },
   {

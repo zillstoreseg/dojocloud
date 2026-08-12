@@ -4,7 +4,7 @@ import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useLocale } from 'next-intl';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import type { PageMeta } from '@/lib/admin/query';
+import type { PageMeta } from '@/lib/list-params';
 
 export function DataTablePagination({ meta }: { meta: PageMeta }) {
   const router = useRouter();

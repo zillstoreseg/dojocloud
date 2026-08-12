@@ -21,11 +21,19 @@ const badgeVariants = cva(
 );
 
 export interface BadgeProps
-  extends React.HTMLAttributes<HTMLDivElement>,
+  extends React.HTMLAttributes<HTMLSpanElement>,
     VariantProps<typeof badgeVariants> {}
 
+/**
+ * Renders a `<span>`, not a `<div>`.
+ *
+ * Badges are routinely placed inline beside a heading or inside a paragraph,
+ * and a block element nested in a `<p>` is invalid HTML — the browser silently
+ * closes the paragraph, which produces a hydration mismatch that only shows up
+ * at runtime.
+ */
 function Badge({ className, variant, ...props }: BadgeProps) {
-  return <div className={cn(badgeVariants({ variant }), className)} {...props} />;
+  return <span className={cn(badgeVariants({ variant }), className)} {...props} />;
 }
 
 /** Maps a domain status to a badge variant, so status colours stay consistent. */

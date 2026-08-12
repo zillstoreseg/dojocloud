@@ -2,7 +2,7 @@ import type { NextRequest } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { auth } from '@/lib/auth';
 import { hasPermission, type Permission } from '@/lib/permissions';
-import { parseListParams, orderByArgs, dateRangeArgs, toCsv } from '@/lib/admin/query';
+import { parseListParams, orderByArgs, dateRangeArgs, toCsv } from '@/lib/list-params';
 import { audit } from '@/lib/audit';
 import { decimalToNumber } from '@/lib/money';
 

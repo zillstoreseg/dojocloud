@@ -152,7 +152,7 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
           </Link>
           <nav className="flex items-center gap-1 sm:gap-2">
             <Button variant="ghost" size="sm" asChild className="hidden sm:inline-flex">
-              <Link href="/coaches">{tNav('coaches')}</Link>
+              <Link href="/#coaches">{tNav('coaches')}</Link>
             </Button>
             <Button variant="ghost" size="sm" asChild>
               <Link href="/login">{tNav('login')}</Link>
@@ -229,7 +229,7 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
                   </Link>
                 </Button>
                 <Button size="lg" variant="outline" asChild>
-                  <Link href="/coaches">{isAr ? 'تصفّح المدربين' : 'Browse coaches'}</Link>
+                  <Link href="/#coaches">{isAr ? 'تصفّح المدربين' : 'Browse coaches'}</Link>
                 </Button>
               </div>
             </Reveal>
@@ -350,7 +350,7 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
 
       {/* ── Coach directory teaser ─────────────────────────────── */}
       {coaches.length > 0 ? (
-        <section className="container py-20 md:py-28">
+        <section id="coaches" className="container scroll-mt-20 py-20 md:py-28">
           <Reveal className="mb-10 flex flex-wrap items-end justify-between gap-4">
             <div className="max-w-xl">
               <p className="eyebrow">{isAr ? 'دليل المدربين' : 'Coach directory'}</p>
@@ -364,7 +364,7 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
               </p>
             </div>
             <Button variant="outline" asChild>
-              <Link href="/coaches">
+              <Link href="/#coaches">
                 {isAr ? 'كل المدربين' : 'All coaches'}
                 <ArrowRight className="rtl-flip" />
               </Link>
@@ -374,8 +374,8 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
           <RevealGroup className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
             {coaches.map((coach) => (
               <RevealItem key={coach.id}>
-                <Link href={`/c/${coach.username}`} className="block h-full">
-                  <Card className="h-full transition-all duration-element ease-brand hover:-translate-y-1 hover:border-primary/40 hover:shadow-lift">
+                <div className="block h-full">
+                  <Card className="h-full">
                     <CardContent className="space-y-3 p-5">
                       <div className="flex items-center gap-3">
                         <Avatar className="size-12 rounded-xl">
@@ -434,7 +434,7 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
                       </dl>
                     </CardContent>
                   </Card>
-                </Link>
+                </div>
               </RevealItem>
             ))}
           </RevealGroup>
@@ -537,7 +537,7 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
                   </Link>
                 </Button>
                 <Button size="lg" variant="ghost" asChild>
-                  <Link href="/coaches">{tNav('coaches')}</Link>
+                  <Link href="/#coaches">{tNav('coaches')}</Link>
                 </Button>
               </div>
             </div>
@@ -556,7 +556,7 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
             </p>
           </div>
           <div className="flex flex-wrap justify-center gap-4">
-            <Link href="/coaches" className="transition-colors hover:text-foreground">
+            <Link href="/#coaches" className="transition-colors hover:text-foreground">
               {tNav('coaches')}
             </Link>
             <Link href="/p/terms" className="transition-colors hover:text-foreground">

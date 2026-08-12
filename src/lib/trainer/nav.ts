@@ -7,6 +7,10 @@ import type { NavSection } from '@/lib/nav';
  * `flag` marks an item that a lower plan does not include. Locked items stay
  * visible and route to billing — hiding them would remove the only place a
  * trainer learns what an upgrade buys.
+ *
+ * `comingSoon` marks a screen that has not shipped yet. It stays visible too,
+ * but inert: a nav link that 404s reads as a broken product, which is a worse
+ * impression than an unfinished one.
  */
 interface TrainerNavItem {
   href: string;
@@ -14,6 +18,7 @@ interface TrainerNavItem {
   labelEn: string;
   icon: string;
   flag?: string;
+  comingSoon?: boolean;
 }
 
 const TRAINER_NAV: { labelAr: string; labelEn: string; items: TrainerNavItem[] }[] = [
@@ -36,6 +41,7 @@ const TRAINER_NAV: { labelAr: string; labelEn: string; items: TrainerNavItem[] }
         labelEn: 'Messages',
         icon: 'MessageSquare',
         flag: FLAG_KEYS.MESSAGING,
+        comingSoon: true,
       },
     ],
   },
@@ -49,6 +55,7 @@ const TRAINER_NAV: { labelAr: string; labelEn: string; items: TrainerNavItem[] }
         labelEn: 'My page',
         icon: 'Globe',
         flag: FLAG_KEYS.BUILDER,
+        comingSoon: true,
       },
       {
         href: '/dash/leads',
@@ -56,6 +63,7 @@ const TRAINER_NAV: { labelAr: string; labelEn: string; items: TrainerNavItem[] }
         labelEn: 'Leads',
         icon: 'UserPlus',
         flag: FLAG_KEYS.LEADS_CRM,
+        comingSoon: true,
       },
       { href: '/dash/packages', labelAr: 'باقاتي', labelEn: 'My packages', icon: 'Package' },
     ],
@@ -64,9 +72,9 @@ const TRAINER_NAV: { labelAr: string; labelEn: string; items: TrainerNavItem[] }
     labelAr: 'الحساب',
     labelEn: 'Account',
     items: [
-      { href: '/dash/wallet', labelAr: 'المحفظة', labelEn: 'Wallet', icon: 'Wallet' },
+      { href: '/dash/wallet', labelAr: 'المحفظة', labelEn: 'Wallet', icon: 'Wallet', comingSoon: true },
       { href: '/dash/billing', labelAr: 'الاشتراك والفوترة', labelEn: 'Plan & billing', icon: 'CreditCard' },
-      { href: '/dash/settings', labelAr: 'الإعدادات', labelEn: 'Settings', icon: 'Settings' },
+      { href: '/dash/settings', labelAr: 'الإعدادات', labelEn: 'Settings', icon: 'Settings', comingSoon: true },
     ],
   },
 ];
@@ -86,7 +94,10 @@ export function trainerNav(flags: Map<string, { enabled: boolean }>): NavSection
       labelAr: item.labelAr,
       labelEn: item.labelEn,
       icon: item.icon,
-      locked: item.flag ? !(flags.get(item.flag)?.enabled ?? false) : false,
+      comingSoon: item.comingSoon,
+      // An unbuilt screen has no upgrade story yet, so the lock is suppressed
+      // until it ships — two badges on one row says nothing clearly.
+      locked: item.comingSoon ? false : item.flag ? !(flags.get(item.flag)?.enabled ?? false) : false,
     })),
   }));
 }

@@ -15,8 +15,12 @@ const MAX_PER_PAGE = 200;
 const RESERVED = new Set(['q', 'page', 'perPage', 'sort', 'dir', 'from', 'to']);
 
 /**
- * Turns admin list URLs into a normalised query descriptor. Every list page
- * reads its state from the URL, so filters survive refresh and are shareable.
+ * Turns a list URL into a normalised query descriptor.
+ *
+ * Every list reads its state from the URL, so filters survive a refresh and a
+ * filtered view can be shared as a link. Used by the admin tables, the trainer
+ * dashboard, and — the reason it lives outside `lib/admin` — the public coach
+ * directory, where shareable filtered URLs are also what search engines index.
  */
 export function parseListParams(
   searchParams: Record<string, string | string[] | undefined>,

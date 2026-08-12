@@ -29,6 +29,7 @@ export function AdminSidebar({
       labelAr: item.labelAr,
       labelEn: item.labelEn,
       icon: item.icon,
+      comingSoon: item.comingSoon,
       // The activations entry aggregates every pending queue, not just trainers.
       badge: item.badgeKey
         ? item.badgeKey === 'trainers'

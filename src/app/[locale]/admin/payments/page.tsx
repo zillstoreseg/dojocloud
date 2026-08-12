@@ -2,7 +2,7 @@ import { setRequestLocale } from 'next-intl/server';
 import type { Prisma } from '@prisma/client';
 import { requireAdminPage } from '@/lib/authz';
 import { prisma } from '@/lib/prisma';
-import { parseListParams, paginationArgs, orderByArgs, dateRangeArgs, pageMeta } from '@/lib/admin/query';
+import { parseListParams, paginationArgs, orderByArgs, dateRangeArgs, pageMeta } from '@/lib/list-params';
 import { AdminPage, AdminTableCard } from '@/components/admin/page-shell';
 import { DataTableToolbar } from '@/components/data-table/toolbar';
 import { DataTablePagination, SortableHeader } from '@/components/data-table/pagination';

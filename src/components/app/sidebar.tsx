@@ -48,6 +48,25 @@ export function AppSidebar({ sections, brandName, homeHref, roleLabel, upgradeHr
             {isAr ? section.labelAr : section.labelEn}
           </p>
           {section.items.map((item) => {
+            const label = isAr ? item.labelAr : item.labelEn;
+
+            // Not built yet: render inert rather than a link that 404s.
+            if (item.comingSoon) {
+              return (
+                <span
+                  key={item.href}
+                  className="nav-link cursor-default opacity-50"
+                  aria-disabled="true"
+                >
+                  <NavIcon name={item.icon} className="size-4 shrink-0" />
+                  <span className="flex-1 truncate">{label}</span>
+                  <Badge variant="muted" className="shrink-0 px-1.5 text-[10px] font-normal">
+                    {isAr ? 'قريبًا' : 'Soon'}
+                  </Badge>
+                </span>
+              );
+            }
+
             // A surface root must not stay highlighted on every child route.
             const active =
               item.href === homeHref ? path === homeHref : path.startsWith(item.href);
@@ -62,9 +81,7 @@ export function AppSidebar({ sections, brandName, homeHref, roleLabel, upgradeHr
                 title={item.locked && isAr ? 'غير متاح في خطتك الحالية' : undefined}
               >
                 <NavIcon name={item.icon} className="size-4 shrink-0" />
-                <span className={cn('flex-1 truncate', item.locked && 'opacity-60')}>
-                  {isAr ? item.labelAr : item.labelEn}
-                </span>
+                <span className={cn('flex-1 truncate', item.locked && 'opacity-60')}>{label}</span>
                 {item.locked ? (
                   <Lock className="size-3.5 shrink-0 text-muted-foreground/70" />
                 ) : item.badge ? (

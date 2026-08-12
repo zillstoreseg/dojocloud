@@ -1,6 +1,6 @@
 import { setRequestLocale } from 'next-intl/server';
 import { requireAdminPage } from '@/lib/authz';
-import { parseListParams } from '@/lib/admin/query';
+import { parseListParams } from '@/lib/list-params';
 import { getSubscriptionStats, getOverviewStats, rangeOrDefault } from '@/lib/admin/analytics';
 import { AdminPage, AdminSection } from '@/components/admin/page-shell';
 import { StatCard } from '@/components/admin/stat-card';

@@ -20,6 +20,16 @@ export interface NavItem {
    * billing page instead of the feature.
    */
   locked?: boolean;
+  /**
+   * Set when the screen has not been built yet.
+   *
+   * Distinct from `locked`: locked means "your plan does not include this",
+   * comingSoon means "we have not shipped it". Both stay visible, but a
+   * comingSoon item is inert — a link that 404s is worse than an honest
+   * placeholder, because it reads as a broken product rather than an
+   * unfinished one.
+   */
+  comingSoon?: boolean;
 }
 
 export interface NavSection {
