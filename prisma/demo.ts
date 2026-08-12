@@ -374,6 +374,24 @@ async function main() {
     });
   }
 
+  // Transfer details for the manual checkout screen. These belong in the demo
+  // dataset rather than the seed: a real deployment must have its admin enter
+  // its own accounts, and the checkout screen correctly warns when they are
+  // missing.
+  const DEMO_PAYMENT_SETTINGS: Record<string, string> = {
+    'payment.bank_name': 'البنك التجاري الدولي (CIB) — فرع المعادي',
+    'payment.bank_account': 'EG38 0001 0001 0000 0000 1234 5678',
+    'payment.instapay': 'coachmate@instapay',
+    'payment.vodafone_cash': '+20 100 000 0000',
+  };
+  for (const [key, value] of Object.entries(DEMO_PAYMENT_SETTINGS)) {
+    await prisma.appSetting.upsert({
+      where: { key },
+      create: { key, value, isEncrypted: false, category: 'payment' },
+      update: { value },
+    });
+  }
+
   const counts = {
     trainers: await prisma.trainerProfile.count(),
     trainees: await prisma.trainee.count(),

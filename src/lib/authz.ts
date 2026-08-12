@@ -69,10 +69,27 @@ export async function requireTrainerPage(
   return user as SessionUser & { trainerId: string };
 }
 
+/**
+ * Reads the trainer's approval status from the database.
+ *
+ * The session carries an `approvalStatus` claim, but it is a snapshot taken
+ * when the JWT was minted: an admin approving a trainer who is already signed
+ * in does not update their token. Using the claim to gate anything would keep
+ * a freshly approved trainer locked out until they signed out and back in — so
+ * every decision that turns on approval reads the row instead.
+ */
+export async function isApprovedTrainer(trainerId: string): Promise<boolean> {
+  const profile = await prisma.trainerProfile.findUnique({
+    where: { id: trainerId },
+    select: { approvalStatus: true },
+  });
+  return profile?.approvalStatus === 'APPROVED';
+}
+
 /** Trainer guard that also requires an approved account and an active subscription. */
 export async function requireActiveTrainer(): Promise<SessionUser & { trainerId: string }> {
   const user = await requireTrainer();
-  if (user.approvalStatus !== 'APPROVED') {
+  if (!(await isApprovedTrainer(user.trainerId))) {
     throw new AuthzError('Account pending approval', 'FORBIDDEN');
   }
   const sub = await prisma.subscription.findFirst({

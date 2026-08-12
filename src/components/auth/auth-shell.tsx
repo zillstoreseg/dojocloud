@@ -24,7 +24,7 @@ export function AuthShell({
   description?: string;
   children: ReactNode;
   footer?: ReactNode;
-  width?: 'md' | 'lg' | 'xl';
+  width?: 'md' | 'lg' | 'xl' | 'wide';
 }) {
   return (
     <main className="relative flex min-h-screen flex-col items-center justify-center overflow-hidden p-4 py-10">
@@ -36,6 +36,9 @@ export function AuthShell({
           width === 'md' && 'max-w-md',
           width === 'lg' && 'max-w-2xl',
           width === 'xl' && 'max-w-3xl',
+          // For side-by-side comparisons (the plan picker), where squeezing
+          // the cards narrower than this makes them unreadable.
+          width === 'wide' && 'max-w-6xl',
         )}
       >
         <div className="flex justify-center">

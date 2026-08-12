@@ -33,6 +33,22 @@ export const USD_RATES: Record<Currency, number> = {
   USD: 1,
 };
 
+/** Display names for the manual payment methods, used wherever one is shown. */
+export const PAYMENT_METHOD_LABELS: Record<string, { ar: string; en: string }> = {
+  INSTAPAY: { ar: 'إنستاباي', en: 'InstaPay' },
+  VODAFONE_CASH: { ar: 'فودافون كاش', en: 'Vodafone Cash' },
+  BANK_TRANSFER: { ar: 'تحويل بنكي', en: 'Bank transfer' },
+  MANUAL_TRANSFER: { ar: 'تحويل يدوي', en: 'Manual transfer' },
+  CARD: { ar: 'بطاقة', en: 'Card' },
+  WALLET: { ar: 'محفظة إلكترونية', en: 'Wallet' },
+};
+
+export function paymentMethodLabel(method: string, locale = 'ar'): string {
+  const entry = PAYMENT_METHOD_LABELS[method];
+  if (!entry) return method;
+  return locale === 'ar' ? entry.ar : entry.en;
+}
+
 export function toUsd(amount: number, currency: string): number {
   const rate = USD_RATES[currency as Currency] ?? 1;
   return amount * rate;
