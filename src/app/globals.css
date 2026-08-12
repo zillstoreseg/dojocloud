@@ -205,6 +205,16 @@
   }
 
   /*
+   * Portrait shape used for coach avatars: softer than a rounded rectangle,
+   * less generic than a circle. A superellipse mask rather than a radius, so
+   * the corners stay continuous at every size.
+   */
+  .squircle {
+    border-radius: 32%;
+    overflow: hidden;
+  }
+
+  /*
    * Signature background: faint contour lines, the visual shorthand for
    * "a journey / progress". Pure CSS so it costs no request and inherits the
    * brand colour in both themes.

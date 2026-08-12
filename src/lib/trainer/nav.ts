@@ -55,7 +55,6 @@ const TRAINER_NAV: { labelAr: string; labelEn: string; items: TrainerNavItem[] }
         labelEn: 'My page',
         icon: 'Globe',
         flag: FLAG_KEYS.BUILDER,
-        comingSoon: true,
       },
       {
         href: '/dash/leads',
@@ -63,7 +62,6 @@ const TRAINER_NAV: { labelAr: string; labelEn: string; items: TrainerNavItem[] }
         labelEn: 'Leads',
         icon: 'UserPlus',
         flag: FLAG_KEYS.LEADS_CRM,
-        comingSoon: true,
       },
       { href: '/dash/packages', labelAr: 'باقاتي', labelEn: 'My packages', icon: 'Package' },
     ],
