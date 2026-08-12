@@ -25,7 +25,7 @@ const EQUIPMENT = [
 
 const optional = (max: number) => z.string().trim().max(max).optional().or(z.literal(''));
 
-export const exerciseSchema = z.object({
+const exerciseSchema = z.object({
   nameAr: z.string().trim().min(2, 'اكتب اسم التمرين بالعربي').max(120),
   nameEn: z.string().trim().min(2, 'اكتب اسم التمرين بالإنجليزي').max(120),
   muscleGroup: z.enum(MUSCLE_GROUPS),

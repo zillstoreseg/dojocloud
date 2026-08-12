@@ -3,16 +3,12 @@ import type { Session } from 'next-auth';
 import { auth } from './auth';
 import { prisma, tenantDb } from './prisma';
 import { hasPermission, type Permission } from './permissions';
+import { AuthzError } from './ownership';
 
-export class AuthzError extends Error {
-  constructor(
-    message: string,
-    readonly code: 'UNAUTHENTICATED' | 'FORBIDDEN' | 'NOT_FOUND',
-  ) {
-    super(message);
-    this.name = 'AuthzError';
-  }
-}
+// The session-free half of authorisation lives in `ownership.ts` so tests can
+// import it; it is re-exported here so callers keep a single entry point.
+export { AuthzError, assertOwnsTrainee, assertOwns, toActionError } from './ownership';
+export type { OwnedModel } from './ownership';
 
 export type SessionUser = Session['user'];
 
@@ -114,36 +110,3 @@ export async function trainerDb() {
   return { db: tenantDb(user.trainerId), user };
 }
 
-/**
- * Asserts the given trainee belongs to the signed-in trainer.
- * Returns the trainee id so callers can chain.
- */
-export async function assertOwnsTrainee(trainerId: string, traineeId: string): Promise<string> {
-  const found = await prisma.trainee.findFirst({
-    where: { id: traineeId, trainerId },
-    select: { id: true },
-  });
-  if (!found) throw new AuthzError('Trainee not found for this trainer', 'NOT_FOUND');
-  return found.id;
-}
-
-/** Generic ownership assertion for any tenant-owned model. */
-export async function assertOwns(
-  model: 'workoutProgram' | 'nutritionPlan' | 'landingPage' | 'exercise' | 'trainerPackage' | 'lead',
-  trainerId: string,
-  id: string,
-): Promise<string> {
-  // @ts-expect-error — delegate lookup is dynamic but constrained by the union above.
-  const found = await prisma[model].findFirst({ where: { id, trainerId }, select: { id: true } });
-  if (!found) throw new AuthzError(`${model} not found for this trainer`, 'NOT_FOUND');
-  return (found as { id: string }).id;
-}
-
-/** Maps an AuthzError to a serialisable result for server actions. */
-export function toActionError(error: unknown): { ok: false; error: string; code?: string } {
-  if (error instanceof AuthzError) {
-    return { ok: false, error: error.message, code: error.code };
-  }
-  const message = error instanceof Error ? error.message : 'Unexpected error';
-  return { ok: false, error: message };
-}

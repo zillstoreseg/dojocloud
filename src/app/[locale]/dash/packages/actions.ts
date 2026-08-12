@@ -12,7 +12,7 @@ export interface PackageActionResult {
   packageId?: string;
 }
 
-export const packageSchema = z.object({
+const packageSchema = z.object({
   name: z.string().trim().min(2, 'اكتب اسم الباقة').max(120),
   description: z.string().trim().max(1000).optional().or(z.literal('')),
   price: z.number().min(0, 'السعر غير صحيح').max(1_000_000),

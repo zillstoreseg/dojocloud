@@ -14,7 +14,7 @@ const nullableInt = z
   .union([z.number().int().min(0), z.null()])
   .describe('null means unlimited');
 
-export const planSchema = z.object({
+const planSchema = z.object({
   id: z.string().optional(),
   key: z
     .string()

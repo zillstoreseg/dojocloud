@@ -29,7 +29,7 @@ const ACTIVITY = ['SEDENTARY', 'LIGHT', 'MODERATE', 'ACTIVE', 'VERY_ACTIVE'] as 
 
 const optionalString = (max: number) => z.string().trim().max(max).optional().or(z.literal(''));
 
-export const traineeSchema = z.object({
+const traineeSchema = z.object({
   fullName: z.string().trim().min(2, 'اكتب اسم المتدرب').max(120),
   phone: optionalString(20),
   email: z.string().trim().toLowerCase().email('البريد غير صحيح').optional().or(z.literal('')),
