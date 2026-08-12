@@ -5,6 +5,7 @@ import { z } from 'zod';
 import { prisma } from '@/lib/prisma';
 import { requireTrainer, assertOwns, toActionError } from '@/lib/authz';
 import { SUPPORTED_CURRENCIES } from '@/lib/money';
+import { syncDirectoryCounters } from '@/lib/directory';
 
 export interface PackageActionResult {
   ok: boolean;
@@ -47,6 +48,8 @@ export async function createPackage(input: PackageInput): Promise<PackageActionR
       data: { ...toData(data), trainerId: user.trainerId },
     });
 
+    // "Starting from" in the directory is the cheapest public package.
+    await syncDirectoryCounters(user.trainerId);
     revalidatePath('/[locale]/dash/packages', 'page');
     return { ok: true, packageId: created.id };
   } catch (error) {
@@ -66,6 +69,8 @@ export async function updatePackage(
     await assertOwns('trainerPackage', user.trainerId, input.id);
 
     await prisma.trainerPackage.update({ where: { id: input.id }, data: toData(data) });
+    // "Starting from" in the directory is the cheapest public package.
+    await syncDirectoryCounters(user.trainerId);
     revalidatePath('/[locale]/dash/packages', 'page');
     return { ok: true, packageId: input.id };
   } catch (error) {
@@ -89,7 +94,9 @@ export async function deletePackage(input: { id: string }): Promise<PackageActio
         data: { isActive: false, isPublic: false },
       });
       if (result.count === 0) return { ok: false, error: 'الباقة غير موجودة' };
-      revalidatePath('/[locale]/dash/packages', 'page');
+      // "Starting from" in the directory is the cheapest public package.
+    await syncDirectoryCounters(user.trainerId);
+    revalidatePath('/[locale]/dash/packages', 'page');
       return { ok: true };
     }
 
@@ -98,6 +105,8 @@ export async function deletePackage(input: { id: string }): Promise<PackageActio
     });
     if (result.count === 0) return { ok: false, error: 'الباقة غير موجودة' };
 
+    // "Starting from" in the directory is the cheapest public package.
+    await syncDirectoryCounters(user.trainerId);
     revalidatePath('/[locale]/dash/packages', 'page');
     return { ok: true };
   } catch (error) {

@@ -5,6 +5,7 @@ import { z } from 'zod';
 import { prisma } from '@/lib/prisma';
 import { requireTrainer, assertOwnsTrainee, toActionError } from '@/lib/authz';
 import { assertQuota, QUOTA_KEYS, QuotaExceededError } from '@/lib/quota';
+import { syncDirectoryCounters } from '@/lib/directory';
 import { audit } from '@/lib/audit';
 
 export interface TraineeActionResult {
@@ -94,6 +95,9 @@ export async function createTrainee(input: TraineeInput): Promise<TraineeActionR
       after: { fullName: trainee.fullName },
     });
 
+    // Trainee count is a directory column, so every write that can change
+    // it refreshes the coach's row.
+    await syncDirectoryCounters(user.trainerId);
     revalidatePath('/[locale]/dash/trainees', 'page');
     return { ok: true, traineeId: trainee.id };
   } catch (error) {
@@ -130,6 +134,9 @@ export async function updateTrainee(
       after: { fullName: data.fullName },
     });
 
+    // Trainee count is a directory column, so every write that can change
+    // it refreshes the coach's row.
+    await syncDirectoryCounters(user.trainerId);
     revalidatePath('/[locale]/dash/trainees', 'page');
     return { ok: true, traineeId: input.id };
   } catch (error) {
@@ -171,6 +178,9 @@ export async function setTraineeStatus(
       after: { status },
     });
 
+    // Trainee count is a directory column, so every write that can change
+    // it refreshes the coach's row.
+    await syncDirectoryCounters(user.trainerId);
     revalidatePath('/[locale]/dash/trainees', 'page');
     return { ok: true, traineeId: id };
   } catch (error) {
@@ -204,6 +214,9 @@ export async function deleteTrainee(input: { id: string }): Promise<TraineeActio
       entityId: input.id,
     });
 
+    // Trainee count is a directory column, so every write that can change
+    // it refreshes the coach's row.
+    await syncDirectoryCounters(user.trainerId);
     revalidatePath('/[locale]/dash/trainees', 'page');
     return { ok: true };
   } catch (error) {

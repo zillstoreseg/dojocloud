@@ -152,7 +152,7 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
           </Link>
           <nav className="flex items-center gap-1 sm:gap-2">
             <Button variant="ghost" size="sm" asChild className="hidden sm:inline-flex">
-              <Link href="/#coaches">{tNav('coaches')}</Link>
+              <Link href="/coaches">{tNav('coaches')}</Link>
             </Button>
             <Button variant="ghost" size="sm" asChild>
               <Link href="/login">{tNav('login')}</Link>
@@ -229,7 +229,7 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
                   </Link>
                 </Button>
                 <Button size="lg" variant="outline" asChild>
-                  <Link href="/#coaches">{isAr ? 'تصفّح المدربين' : 'Browse coaches'}</Link>
+                  <Link href="/coaches">{isAr ? 'تصفّح المدربين' : 'Browse coaches'}</Link>
                 </Button>
               </div>
             </Reveal>
@@ -364,7 +364,7 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
               </p>
             </div>
             <Button variant="outline" asChild>
-              <Link href="/#coaches">
+              <Link href="/coaches">
                 {isAr ? 'كل المدربين' : 'All coaches'}
                 <ArrowRight className="rtl-flip" />
               </Link>
@@ -537,7 +537,7 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
                   </Link>
                 </Button>
                 <Button size="lg" variant="ghost" asChild>
-                  <Link href="/#coaches">{tNav('coaches')}</Link>
+                  <Link href="/coaches">{tNav('coaches')}</Link>
                 </Button>
               </div>
             </div>
@@ -556,7 +556,7 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
             </p>
           </div>
           <div className="flex flex-wrap justify-center gap-4">
-            <Link href="/#coaches" className="transition-colors hover:text-foreground">
+            <Link href="/coaches" className="transition-colors hover:text-foreground">
               {tNav('coaches')}
             </Link>
             <Link href="/p/terms" className="transition-colors hover:text-foreground">

@@ -309,6 +309,19 @@ model TrainerProfile {
   featuredUntil DateTime?
   isListed      Boolean   @default(true)
 
+  // Denormalised counters for the public directory. The directory filters and
+  // sorts on these, so they are written when the underlying thing happens —
+  // an approval, a subscription, a cancellation — and never aggregated at read
+  // time. `syncDirectoryCounters` in lib/directory.ts is the only writer.
+  activeTraineesCount      Int      @default(0)
+  approvedCertificatesCount Int     @default(0)
+  ratingAvg                Decimal? @db.Decimal(3, 2)
+  ratingCount              Int      @default(0)
+  /// Cheapest public package, in `startingCurrency`. Null when none is public.
+  startingPrice            Decimal? @db.Decimal(12, 2)
+  startingCurrency         String?
+  languages                String[] @default([])
+
   socialLinks Json? // { instagram, tiktok, youtube, facebook, whatsapp, x }
 
   createdAt DateTime @default(now())
@@ -332,6 +345,9 @@ model TrainerProfile {
   @@index([approvalStatus])
   @@index([isFeatured, isListed])
   @@index([country])
+  // The directory's default ordering: featured first, then most subscribed.
+  @@index([approvalStatus, isListed, isFeatured, activeTraineesCount])
+  @@index([yearsExperience])
 }
 
 /// Keeps old handles resolvable with a 301 after a username change.
@@ -605,6 +621,7 @@ model Trainee {
   workoutLogs     WorkoutLog[]
   conversations   Conversation[]
   convertedFrom   Lead[]
+  intakes         TraineeIntake[]
 
   @@index([trainerId, status])
   @@index([renewalDate])
@@ -664,6 +681,94 @@ model TraineeSubscription {
 
   @@index([traineeId, status])
   @@index([status, createdAt])
+}
+
+/// What a trainee tells their coach when they sign up.
+///
+/// Kept as its own versioned row rather than folded into `Trainee`: it is a
+/// snapshot of the answers on a given day, and the derived targets below are
+/// stored with it so a plan written against them can still be explained later,
+/// even after the trainee's weight has moved on.
+model TraineeIntake {
+  id        String  @id @default(cuid())
+  traineeId String
+  trainee   Trainee @relation(fields: [traineeId], references: [id], onDelete: Cascade)
+
+  version     Int      @default(1)
+  submittedAt DateTime @default(now())
+
+  // Goal and body
+  goal         TrainingGoal
+  targetWeightKg Decimal?   @db.Decimal(5, 1)
+  weightKg     Decimal      @db.Decimal(5, 1)
+  heightCm     Decimal      @db.Decimal(5, 1)
+  gender       Gender
+  birthDate    DateTime
+
+  // Activity and sport
+  activityLevel   ActivityLevel
+  isAthlete       Boolean       @default(false)
+  sportType       String?
+  sportLevel      SportLevel?
+  trainingDaysPerWeek Int       @default(3)
+  sessionMinutes  Int           @default(60)
+  trainingPlace   TrainingPlace @default(GYM)
+  equipment       Equipment[]
+  previousExperienceYears Int    @default(0)
+
+  // Health
+  injuries          String[] @default([])
+  medicalConditions String[] @default([])
+  medications       String?
+  allergies         String[] @default([])
+
+  // Diet and lifestyle
+  dietPreference DietPreference @default(NONE)
+  dislikedFoods  String[]       @default([])
+  mealsPerDay    Int            @default(3)
+  sleepHours     Int            @default(7)
+  waterLiters    Decimal?       @db.Decimal(3, 1)
+  smokes         Boolean        @default(false)
+  workSchedule   String?
+  stressLevel    Int            @default(3)
+  notes          String?
+
+  // Computed by lib/nutrition.ts at submit time and stored, not recomputed.
+  bmi          Decimal @db.Decimal(5, 2)
+  bmr          Int
+  tdee         Int
+  calorieTarget Int
+  proteinG     Int
+  carbsG       Int
+  fatG         Int
+
+  @@unique([traineeId, version])
+  @@index([traineeId, submittedAt])
+}
+
+enum SportLevel {
+  BEGINNER
+  CLUB
+  COMPETITIVE
+  PRO
+}
+
+enum TrainingPlace {
+  HOME
+  GYM
+  OUTDOOR
+}
+
+enum DietPreference {
+  NONE
+  VEGETARIAN
+  VEGAN
+  PESCATARIAN
+  KETO
+  LOW_CARB
+  HALAL_ONLY
+  GLUTEN_FREE
+  LACTOSE_FREE
 }
 
 model Exercise {

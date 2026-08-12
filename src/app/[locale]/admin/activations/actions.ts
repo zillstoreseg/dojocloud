@@ -5,6 +5,7 @@ import { z } from 'zod';
 import { prisma } from '@/lib/prisma';
 import { requireAdmin, toActionError } from '@/lib/authz';
 import { audit, notify } from '@/lib/audit';
+import { syncDirectoryCounters } from '@/lib/directory';
 import { addInterval } from '@/lib/utils';
 import { resetCounters } from '@/lib/quota';
 import { decimalToNumber } from '@/lib/money';
@@ -70,6 +71,10 @@ export async function approveTrainer(input: { id: string }): Promise<ActionResul
       }),
     ]);
 
+    // Approval turns certificates green and puts the coach in the directory,
+    // so the columns the directory reads have to catch up here.
+    await syncDirectoryCounters(id);
+
     revalidatePath('/[locale]/admin/activations', 'page');
     return { ok: true, message: `تم اعتماد ${trainer.fullName}` };
   } catch (error) {
@@ -126,7 +131,7 @@ export async function reviewCertificate(input: {
 
     const certificate = await prisma.certificate.findUnique({
       where: { id },
-      select: { title: true, trainer: { select: { userId: true } } },
+      select: { title: true, trainerId: true, trainer: { select: { userId: true } } },
     });
     if (!certificate) return { ok: false, error: 'الشهادة غير موجودة' };
 
@@ -157,6 +162,8 @@ export async function reviewCertificate(input: {
         bodyEn: `${certificate.title}${input.note ? ` — ${input.note}` : ''}`,
       }),
     ]);
+
+    await syncDirectoryCounters(certificate.trainerId);
 
     revalidatePath('/[locale]/admin/activations', 'page');
     return { ok: true, message: input.approve ? 'تم اعتماد الشهادة' : 'تم رفض الشهادة' };
@@ -340,6 +347,9 @@ export async function reviewTraineeSubscription(input: {
         data: { status: 'ACTIVE', renewalDate: endsAt },
       }),
     ]);
+
+    // A new active trainee changes the coach's headline number in the directory.
+    await syncDirectoryCounters(sub.trainee.trainerId);
 
     if (sub.trainee.userId) {
       await notify({
