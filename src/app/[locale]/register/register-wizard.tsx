@@ -33,18 +33,28 @@ export function RegisterWizard({ locale, options, labels }: Props) {
   const router = useRouter();
   const [step, setStep] = useState(0);
   const [direction, setDirection] = useState<1 | -1>(1);
-  // `?ref=CODE` on the signup link prefills the invite field. Read from the
-  // URL rather than a cookie so a shared link works in a fresh browser, which
-  // is the only way a referral link is ever actually opened.
-  const [draft, setDraft] = useState<Draft>(() => ({
-    specialties: [],
-    yearsExperience: undefined,
-    referralCode:
-      typeof window === 'undefined'
-        ? ''
-        : (new URLSearchParams(window.location.search).get('ref') ?? '').toUpperCase().slice(0, 16),
-  }));
+  const [draft, setDraft] = useState<Draft>({ specialties: [], yearsExperience: undefined });
   const [errors, setErrors] = useState<Record<string, string>>({});
+
+  /**
+   * `?ref=CODE` on the signup link prefills the invite field.
+   *
+   * In an effect rather than a `useState` initializer: this component is
+   * server-rendered first, where `window` does not exist, and React does not
+   * re-run a state initializer during hydration — it keeps the server's value.
+   * So an initializer guarded on `typeof window` would resolve to an empty
+   * string on the server and stay empty forever, and every invite link would
+   * silently fail to attribute its referral.
+   *
+   * Read from the URL rather than a cookie, so a link shared over WhatsApp
+   * works in a browser that has never seen this site — which is the only way
+   * a referral link is ever actually opened.
+   */
+  useEffect(() => {
+    const ref = new URLSearchParams(window.location.search).get('ref');
+    if (!ref) return;
+    setDraft((prev) => ({ ...prev, referralCode: ref.toUpperCase().slice(0, 16) }));
+  }, []);
   const [formError, setFormError] = useState<string | null>(null);
   const [submitting, startSubmit] = useTransition();
 

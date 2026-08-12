@@ -87,12 +87,23 @@ test('an admin approves the receipt and the coach is credited', async ({ page })
   await page.getByRole('tab', { name: /اشتراكات المتدربين/ }).click();
   await page.waitForTimeout(1200);
 
-  // Find this run's row specifically, so a stray pending row from another
-  // test does not make this one pass for the wrong reason.
-  const row = page.locator('tr, [data-row]').filter({ hasText: TRAINEE.name }).first();
-  await expect(row).toBeVisible();
-  await row.getByRole('button', { name: 'اعتماد' }).first().click();
+  // Find this run's entry specifically, so a stray pending row from another
+  // test does not make this one pass for the wrong reason. The queue renders
+  // each entry as a card rather than a table row, so the card is located by
+  // being the innermost element that holds both the name and its own approve
+  // button — `.last()` on a chain of nested matches is the innermost one.
+  const card = page
+    .locator('div')
+    .filter({ hasText: TRAINEE.name })
+    .filter({ has: page.getByRole('button', { name: 'اعتماد' }) })
+    .last();
+
+  await expect(card).toBeVisible();
+  await card.getByRole('button', { name: 'اعتماد' }).click();
   await page.waitForTimeout(3500);
+
+  // The entry leaves the queue once it is approved.
+  await expect(page.getByText(TRAINEE.name)).toHaveCount(0);
 
   // The wallet is the proof that approval did more than flip a status.
   await signIn(page, ACCOUNTS.coach, /dash/);
