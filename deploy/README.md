@@ -21,9 +21,8 @@ the domain, and it cannot be issued before DNS resolves.
 SSH in as a user with sudo, then:
 
 ```bash
-git clone https://github.com/zillstoreseg/dojocloud.git /tmp/coachmate
+git clone https://github.com/zillstoreseg/coachmate.git /tmp/coachmate
 cd /tmp/coachmate
-git checkout claude/trainer-trainee-web-app-a7n0r3
 
 sudo DOMAIN=coachmate.app LETSENCRYPT_EMAIL=you@example.com \
      bash deploy/bootstrap.sh
@@ -108,9 +107,12 @@ Delete the private key from the server once GitHub has it:
 sudo shred -u /srv/coachmate/shared/deploy_key
 ```
 
-The server keeps only the public half. From here, every push to
-`claude/trainer-trainee-web-app-a7n0r3` runs typecheck, lint and the full test
-suite, and deploys only if all three pass.
+The server keeps only the public half. From here, every push to `main` runs
+typecheck, lint and the full test suite, and deploys only if all three pass.
+
+**`main` is production.** Anything else — yours, an agent's, a collaborator's —
+belongs on its own branch and reaches `main` through a pull request, where the
+same checks run before the merge rather than after it.
 
 ## 6. Work down the health screen
 

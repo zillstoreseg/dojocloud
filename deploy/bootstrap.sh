@@ -18,7 +18,7 @@ set -Eeuo pipefail
 APP_USER="${APP_USER:-coachmate}"
 APP_DIR="${APP_DIR:-/srv/coachmate}"
 APP_PORT="${APP_PORT:-3000}"
-REPO_URL="${REPO_URL:-https://github.com/zillstoreseg/dojocloud.git}"
+REPO_URL="${REPO_URL:-https://github.com/zillstoreseg/coachmate.git}"
 BRANCH="${BRANCH:-claude/trainer-trainee-web-app-a7n0r3}"
 NODE_MAJOR="${NODE_MAJOR:-22}"
 PG_VERSION="${PG_VERSION:-16}"

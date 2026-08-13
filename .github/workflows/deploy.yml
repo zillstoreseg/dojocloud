@@ -8,7 +8,7 @@ name: Deploy
 on:
   push:
     branches:
-      - claude/trainer-trainee-web-app-a7n0r3
+      - main
   workflow_dispatch:
 
 concurrency:
