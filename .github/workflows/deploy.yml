@@ -1,0 +1,114 @@
+name: Deploy
+
+# Push to the branch → the server pulls, builds and restarts.
+#
+# The credential lives in GitHub's encrypted secrets, not in this file and not
+# in anybody's chat history. GitHub holds a private key; the server holds only
+# the matching public key, in one account's authorized_keys.
+on:
+  push:
+    branches:
+      - claude/trainer-trainee-web-app-a7n0r3
+  workflow_dispatch:
+
+concurrency:
+  # Two deploys racing on one checkout is how a server ends up in a state that
+  # matches no commit. A queued deploy waits rather than being cancelled — the
+  # later commit still needs to land.
+  group: deploy-production
+  cancel-in-progress: false
+
+jobs:
+  verify:
+    name: Verify
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      # CI connects exactly the way production does: as a role that owns its
+      # schema and is NOT a superuser. See the database step below.
+      DATABASE_URL: postgresql://coachmate_ci:ci@localhost:5432/coachmate_ci?schema=public
+      AUTH_SECRET: ci-secret-not-used-anywhere-real
+      SETTINGS_ENCRYPTION_KEY: '0000000000000000000000000000000000000000000000000000000000000000'
+      NEXT_PUBLIC_APP_URL: http://localhost:3000
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Prepare the database the way production has it
+        env:
+          PGPASSWORD: postgres
+        run: |
+          # NOSUPERUSER NOBYPASSRLS is the point. PostgreSQL exempts both from
+          # every row-level security policy silently, so a CI run as `postgres`
+          # would pass the RLS suite while proving nothing — and tests/rls.test.ts
+          # asserts exactly that, so this is not optional.
+          psql -h localhost -U postgres -v ON_ERROR_STOP=1 <<'SQL'
+          CREATE ROLE coachmate_ci LOGIN PASSWORD 'ci' NOSUPERUSER NOBYPASSRLS;
+          CREATE DATABASE coachmate_ci OWNER coachmate_ci;
+          SQL
+
+      - name: Apply migrations
+        run: pnpm prisma migrate deploy
+
+      # The suite needs the flags, plans and libraries a real database has:
+      # the referral tests attach a subscription to a plan, and the flag
+      # resolver has nothing to resolve without them.
+      - name: Seed
+        run: pnpm db:seed
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Test
+        run: pnpm test
+
+      - name: Build
+        run: pnpm build
+
+  deploy:
+    name: Deploy
+    needs: verify
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - name: Push to the server
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          port: ${{ secrets.DEPLOY_PORT || 22 }}
+          # Generous: a cold build on a small VPS is not fast, and a timeout
+          # halfway through leaves the deploy script's rollback unreached.
+          command_timeout: 20m
+          script: |
+            set -e
+            bash /srv/coachmate/repo/deploy/deploy.sh
