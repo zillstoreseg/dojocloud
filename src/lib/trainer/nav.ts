@@ -48,7 +48,6 @@ const TRAINER_NAV: { labelAr: string; labelEn: string; items: TrainerNavItem[] }
         labelEn: 'Messages',
         icon: 'MessageSquare',
         flag: FLAG_KEYS.MESSAGING,
-        comingSoon: true,
       },
     ],
   },
@@ -79,7 +78,7 @@ const TRAINER_NAV: { labelAr: string; labelEn: string; items: TrainerNavItem[] }
     items: [
       { href: '/dash/wallet', labelAr: 'المحفظة', labelEn: 'Wallet', icon: 'Wallet' },
       { href: '/dash/billing', labelAr: 'الاشتراك والفوترة', labelEn: 'Plan & billing', icon: 'CreditCard' },
-      { href: '/dash/settings', labelAr: 'الإعدادات', labelEn: 'Settings', icon: 'Settings', comingSoon: true },
+      { href: '/dash/settings', labelAr: 'الإعدادات', labelEn: 'Settings', icon: 'Settings' },
     ],
   },
 ];

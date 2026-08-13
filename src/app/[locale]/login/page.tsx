@@ -45,11 +45,21 @@ export default async function LoginPage({
                 submit: tAuth('loginButton'),
                 invalid: tAuth('invalidCredentials'),
                 suspended: tAuth('accountSuspended'),
+                throttled:
+                  locale === 'ar'
+                    ? 'حاولت كتير أوي. استنى ربع ساعة وجرّب تاني، أو استعِد كلمة السر.'
+                    : 'Too many attempts. Wait fifteen minutes, or reset your password.',
                 generic: t('errorGeneric'),
               }}
             />
           </CardContent>
         </Card>
+
+        <p className="text-center text-sm">
+          <Link href="/forgot" className="text-muted-foreground hover:text-primary hover:underline">
+            {locale === 'ar' ? 'نسيت كلمة السر؟' : 'Forgot your password?'}
+          </Link>
+        </p>
 
         <p className="text-center text-sm text-muted-foreground">
           {tAuth('noAccount')}{' '}

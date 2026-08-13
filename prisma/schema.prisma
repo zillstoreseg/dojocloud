@@ -261,6 +261,7 @@ model User {
   auditLogs        AuditLog[]       @relation("AuditActor")
   sentMessages     Message[]        @relation("MessageSender")
   featureOverrides UserFeatureOverride[]
+  passwordResets   PasswordResetToken[]
 
   @@index([role, status])
   @@index([createdAt])
@@ -1428,6 +1429,47 @@ model AuditLog {
 
   @@index([entity, entityId])
   @@index([actorId, createdAt])
+  @@index([createdAt])
+}
+
+/// A single-use link that lets somebody who has lost their password prove they
+/// control the mailbox on the account.
+///
+/// Only the hash is stored. The token itself exists in exactly one place — the
+/// email — so a database dump does not hand anybody a set of working password
+/// reset links.
+model PasswordResetToken {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  /// sha256 of the token that was emailed.
+  tokenHash String   @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  /// Where the request came from, kept so a burst of them can be investigated.
+  requestIp String?
+  createdAt DateTime @default(now())
+
+  @@index([userId, createdAt])
+  @@index([expiresAt])
+}
+
+/// One recorded attempt at a rate-limited action.
+///
+/// Counting rows in a window rather than keeping a counter: it needs no
+/// read-modify-write, so two simultaneous requests cannot both read "4" and
+/// both decide they are under a limit of 5. The old in-memory Map could not do
+/// this — it was per-process, so it reset on every deploy and did nothing at
+/// all behind more than one instance.
+model RateLimitHit {
+  id     String @id @default(cuid())
+  /// What is being limited: "login", "password-reset", "lead", "receipt".
+  bucket String
+  /// Who is being limited: an IP, an email, or a composite of both.
+  subject String
+  createdAt DateTime @default(now())
+
+  @@index([bucket, subject, createdAt])
   @@index([createdAt])
 }
 

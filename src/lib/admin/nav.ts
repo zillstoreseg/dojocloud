@@ -76,7 +76,7 @@ export const ADMIN_NAV: AdminNavSection[] = [
       { href: '/admin/food-scans', labelAr: 'تحليلات صور الأكل', labelEn: 'Food scans', icon: 'Camera', permission: 'analytics.ai' },
       { href: '/admin/pages', labelAr: 'صفحات المدربين', labelEn: 'Trainer pages', icon: 'Globe', permission: 'pages.read', badgeKey: 'pages' },
       { href: '/admin/leads', labelAr: 'العملاء المحتملون', labelEn: 'Leads', icon: 'UserPlus', permission: 'leads.read', comingSoon: true },
-      { href: '/admin/static-pages', labelAr: 'الصفحات الثابتة', labelEn: 'Static pages', icon: 'FileText', permission: 'content.write', comingSoon: true },
+      { href: '/admin/static-pages', labelAr: 'الصفحات الثابتة', labelEn: 'Static pages', icon: 'FileText', permission: 'content.write' },
       { href: '/admin/announcements', labelAr: 'الإعلانات', labelEn: 'Announcements', icon: 'Megaphone', permission: 'content.write', comingSoon: true },
     ],
   },

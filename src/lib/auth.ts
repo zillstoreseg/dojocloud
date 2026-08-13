@@ -3,6 +3,7 @@ import Credentials from 'next-auth/providers/credentials';
 import bcrypt from 'bcryptjs';
 import { z } from 'zod';
 import { prisma } from './prisma';
+import { rateLimit, clearRateLimit, requestIp } from './rate-limit';
 
 declare module 'next-auth' {
   interface Session {
@@ -72,8 +73,18 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         const parsed = credentialsSchema.safeParse(raw);
         if (!parsed.success) return null;
 
+        const email = parsed.data.email.toLowerCase().trim();
+
+        // Throttle on email+IP together. On email alone, one attacker could
+        // lock a real coach out of their own account by guessing at it; on IP
+        // alone, a shared office or a mobile carrier NAT would throttle
+        // innocent people. The pair targets the actual behaviour.
+        const ip = await requestIp();
+        const attempt = await rateLimit('login', `${email}|${ip}`);
+        if (!attempt.allowed) throw new Error('TOO_MANY_ATTEMPTS');
+
         const user = await prisma.user.findUnique({
-          where: { email: parsed.data.email.toLowerCase().trim() },
+          where: { email },
           select: { id: true, passwordHash: true, status: true },
         });
         // Constant-ish work either way, so a missing account and a wrong
@@ -82,6 +93,12 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         const ok = await bcrypt.compare(parsed.data.password, hash);
         if (!user || !ok) return null;
         if (user.status === 'SUSPENDED') throw new Error('ACCOUNT_SUSPENDED');
+
+        // Proving you know the password clears the counter. The throttle is
+        // there to slow down guessing, and somebody who just got it right is
+        // not guessing — without this, a user who fumbles it twice then
+        // succeeds would stay throttled for the rest of the window.
+        await clearRateLimit('login', `${email}|${ip}`);
 
         await prisma.user.update({
           where: { id: user.id },
@@ -162,6 +179,6 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   },
 });
 
-export function hashPassword(plain: string) {
-  return bcrypt.hash(plain, 12);
-}
+// Re-exported so existing call sites keep one entry point; the implementation
+// lives in `password.ts`, which can be imported outside a Next runtime.
+export { hashPassword, verifyPassword } from './password';

@@ -4,6 +4,8 @@ import { notify } from '@/lib/audit';
 import { env } from '@/lib/env';
 import { daysRemaining } from '@/lib/billing';
 import { releaseMatured } from '@/lib/wallet';
+import { pruneRateLimits } from '@/lib/rate-limit';
+import { pruneResetTokens } from '@/lib/password-reset';
 
 /**
  * Daily subscription maintenance: expire what has run out, and warn the people
@@ -173,7 +175,17 @@ export async function POST(request: Request) {
   // run delays the ledger entry rather than the coach's money.
   const released = await releaseMatured().catch(() => 0);
 
+  // ── 5. Housekeeping ─────────────────────────────────────────────────────
+  // Rate-limit hits and spent reset tokens are write-heavy and read-recent;
+  // without a sweep they grow forever for no benefit.
+  const [prunedLimits, prunedTokens] = await Promise.all([
+    pruneRateLimits().catch(() => 0),
+    pruneResetTokens().catch(() => 0),
+  ]);
+
   return NextResponse.json({
+    prunedLimits,
+    prunedTokens,
     ok: true,
     expired: expiring.length,
     reminders,

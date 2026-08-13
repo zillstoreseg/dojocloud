@@ -10,6 +10,7 @@ import { energyTargets, ageFrom } from '@/lib/nutrition';
 import { nutritionGoal, nutritionActivity } from '@/lib/training';
 import { syncDirectoryCounters } from '@/lib/directory';
 import { decimalToNumber } from '@/lib/money';
+import { rateLimit } from '@/lib/rate-limit';
 import { intakeSchema, type IntakeInput } from './schema';
 
 export interface JoinResult {
@@ -197,17 +198,6 @@ export async function submitJoin(input: {
   }
 }
 
-const RECEIPT_LIMIT = { max: 6, windowMs: 60 * 60 * 1000 };
-const recent = new Map<string, number[]>();
-
-function rateLimited(key: string): boolean {
-  const now = Date.now();
-  const hits = (recent.get(key) ?? []).filter((t) => now - t < RECEIPT_LIMIT.windowMs);
-  hits.push(now);
-  recent.set(key, hits);
-  if (recent.size > 5000) recent.clear();
-  return hits.length > RECEIPT_LIMIT.max;
-}
 
 /**
  * Attaches the transfer receipt to a pending subscription.
@@ -224,7 +214,8 @@ export async function attachReceipt(input: {
   try {
     const h = await headers();
     const ip = h.get('x-forwarded-for')?.split(',')[0]?.trim() ?? h.get('x-real-ip') ?? 'local';
-    if (rateLimited(ip)) return { ok: false, error: 'حاولت كتير، استنى شوية' };
+    const limit = await rateLimit('receipt', ip);
+    if (!limit.allowed) return { ok: false, error: 'حاولت كتير، استنى شوية' };
 
     const sub = await prisma.traineeSubscription.findFirst({
       where: { id: input.subscriptionId, status: 'PENDING', receiptUrl: null },

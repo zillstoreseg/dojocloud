@@ -7,7 +7,7 @@ import type { NavSection } from '@/lib/nav';
  * usually between sets or in front of a plate, and every extra row is one more
  * thing to read before doing the one thing they came for.
  */
-export function traineeNav(options: { canScan: boolean }): NavSection[] {
+export function traineeNav(options: { canScan: boolean; canMessage: boolean }): NavSection[] {
   return [
     {
       labelAr: 'يومي',
@@ -18,6 +18,16 @@ export function traineeNav(options: { canScan: boolean }): NavSection[] {
         { href: '/my/nutrition', labelAr: 'تغذيتي', labelEn: 'My nutrition', icon: 'Apple' },
         ...(options.canScan
           ? [{ href: '/my/scan', labelAr: 'صوّر وجبتك', labelEn: 'Scan a meal', icon: 'Camera' }]
+          : []),
+        ...(options.canMessage
+          ? [
+              {
+                href: '/my/messages',
+                labelAr: 'مدربك',
+                labelEn: 'Your coach',
+                icon: 'MessageSquare',
+              },
+            ]
           : []),
       ],
     },

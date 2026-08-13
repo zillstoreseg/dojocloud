@@ -31,15 +31,16 @@ export default async function TraineeLayout({
     select: { userId: true },
   });
 
-  const [brand, canScan] = await Promise.all([
+  const [brand, canScan, canMessage] = await Promise.all([
     getBrand(),
     coach ? isFeatureEnabled(coach.userId, FLAG_KEYS.AI_FOOD_SCAN) : Promise.resolve(false),
+    coach ? isFeatureEnabled(coach.userId, FLAG_KEYS.MESSAGING) : Promise.resolve(false),
   ]);
 
   return (
     <div className="flex min-h-screen bg-muted/20">
       <AppSidebar
-        sections={traineeNav({ canScan })}
+        sections={traineeNav({ canScan, canMessage })}
         brandName={brand.name}
         homeHref="/my"
         roleLabel={locale === 'ar' ? 'متدرب' : 'Trainee'}

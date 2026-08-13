@@ -3,6 +3,7 @@
 import { headers } from 'next/headers';
 import { z } from 'zod';
 import { prisma } from '@/lib/prisma';
+import { rateLimit } from '@/lib/rate-limit';
 import { notify } from '@/lib/audit';
 
 /**
@@ -29,23 +30,12 @@ const leadSchema = z.object({
   message: z.string().trim().max(1000).optional().or(z.literal('')),
 });
 
-const RATE_LIMIT = { max: 5, windowMs: 60 * 60 * 1000 };
 
 /**
  * In-memory limiter. Deliberately per-instance: it is a speed bump against a
  * casual flood, not a security boundary, and it costs no round trip. A real
  * distributed limit belongs at the edge.
  */
-const recent = new Map<string, number[]>();
-
-function rateLimited(key: string): boolean {
-  const now = Date.now();
-  const hits = (recent.get(key) ?? []).filter((t) => now - t < RATE_LIMIT.windowMs);
-  hits.push(now);
-  recent.set(key, hits);
-  if (recent.size > 5000) recent.clear();
-  return hits.length > RATE_LIMIT.max;
-}
 
 export async function submitLead(input: z.input<typeof leadSchema>): Promise<LeadResult> {
   try {
@@ -53,7 +43,8 @@ export async function submitLead(input: z.input<typeof leadSchema>): Promise<Lea
 
     const h = await headers();
     const ip = h.get('x-forwarded-for')?.split(',')[0]?.trim() ?? h.get('x-real-ip') ?? 'local';
-    if (rateLimited(`${ip}|${data.username}`)) {
+    const limit = await rateLimit('lead', `${ip}|${data.username}`);
+    if (!limit.allowed) {
       return { ok: false, error: 'حاولت كتير في وقت قصير، استنى شوية وجرّب تاني' };
     }
 

@@ -10,6 +10,7 @@ import { decimalToNumber } from '@/lib/money';
 import { getBrand } from '@/lib/settings';
 import { CoachDirectory, type DirectoryCoach } from './coach-directory';
 import { DirectoryFilters } from './filters';
+import { SiteFooter } from '@/components/site/footer';
 import { DataTablePagination } from '@/components/data-table/pagination';
 
 type Params = Promise<{ locale: string }>;
@@ -213,6 +214,10 @@ export default async function CoachesPage({
 
         <DataTablePagination meta={meta} />
       </div>
+
+      {/* The directory is a public, indexed page, so the terms and privacy
+          links have to be reachable from it too. */}
+      <SiteFooter locale={locale} />
     </main>
   );
 }

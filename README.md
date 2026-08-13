@@ -9,7 +9,7 @@ Three roles, three surfaces, one codebase:
 | Admin panel | `/{locale}/admin` | The platform owner |
 | Coach dashboard | `/{locale}/dash` | An approved, subscribed trainer |
 | Trainee portal | `/{locale}/my` | A trainee with a login |
-| Public | `/{locale}`, `/{locale}/coaches`, `/{locale}/c/{username}`, `/{locale}/join/{username}` | Anyone |
+| Public | `/{locale}`, `/{locale}/coaches`, `/{locale}/c/{username}`, `/{locale}/join/{username}`, `/{locale}/p/{slug}` | Anyone |
 
 ---
 
@@ -61,6 +61,9 @@ src/app/[locale]/
   my              the trainee's portal
 src/lib/
   authz, ownership       who may touch what
+  password, password-reset  hashing, and the recovery flow
+  rate-limit             throttling that survives a deploy
+  messaging              coach ↔ trainee threads
   prisma                 client + the tenant-scoped extension
   rls                    PostgreSQL row-level security
   flags, quota           feature gating and plan limits
@@ -81,6 +84,10 @@ src/lib/
 **AI drafts, humans decide.** Program and nutrition generation return a draft rendered in full for the coach to read. Nothing is written until they accept, and on acceptance every exercise and food id is re-verified against what that coach may actually use — the model picks from their library by id, so a hallucinated id is dropped rather than trusted.
 
 **The wallet is an append-only ledger.** `WalletTransaction` rows are never updated or deleted; a correction is an opposing `ADJUSTMENT`. `post()` computes the balance snapshot itself so a caller cannot record a balance that never existed, and a tested invariant asserts `balance + pendingBalance == Σ(transactions)` after every operation.
+
+**Credential forms post.** `method="post"` on the sign-in and reset forms even though the submit is handled in JavaScript: before React hydrates, a form with no method submits as a GET and appends every field to the URL — putting a password into browser history, the referrer header, and the server's access log.
+
+**Rate limiting is rows, not a Map.** The obvious in-memory limiter is per-process: it resets on every deploy and behind two instances a limit of five becomes ten. For a contact form that is sloppy; on a login endpoint the throttle simply does not exist. Hits are rows and the limit is a count over a window, which also removes the read-modify-write that would let two simultaneous requests both read "4".
 
 **Money is `Decimal`, dates are formatted explicitly.** `toLocaleDateString('ar-EG-u-nu-latn')` embeds U+200F marks that the bidi algorithm reorders against neighbouring text — the same date rendered "12/08/2026" in one column and "122026/8/" in another. `formatDate` in `lib/money.ts` builds the string by hand.
 
@@ -113,13 +120,13 @@ The policy predicate is `current_setting('app.trainer_id') IS NULL OR "trainerId
 ## Testing
 
 ```bash
-pnpm test          # Vitest — 193 tests, several against a real database
+pnpm test          # Vitest — 223 tests, several against a real database
 pnpm test:e2e      # Playwright — route sweep + the full journey
 pnpm typecheck
 pnpm lint
 ```
 
-The unit suite covers what is worth proving in isolation: the flag resolver's three layers, quota arithmetic, `endsAt` for every billing interval, BMR/TDEE/macro splits against known reference cases, the meal verdict at each of its boundaries, the wallet invariant under double-credit and double-spend, referral rewards under concurrent approval, and data isolation — coach A cannot read, update or delete anything of coach B's through any path.
+The unit suite covers what is worth proving in isolation: password recovery (a link that works twice, a link that outlives its replacement, a token readable from a dump, a throttle that can be walked past); the flag resolver's three layers, quota arithmetic, `endsAt` for every billing interval, BMR/TDEE/macro splits against known reference cases, the meal verdict at each of its boundaries, the wallet invariant under double-credit and double-spend, referral rewards under concurrent approval, and data isolation — coach A cannot read, update or delete anything of coach B's through any path.
 
 The E2E suite covers what only a browser can. `routes.spec.ts` opens every surface in both locales and fails on a console error; `journey.spec.ts` walks the whole arc — directory → landing page → intake → receipt → admin approval → coach's wallet credited → trainee signs in and sees targets computed from their own answers.
 

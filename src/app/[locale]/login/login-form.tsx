@@ -19,6 +19,7 @@ interface Props {
     submit: string;
     invalid: string;
     suspended: string;
+    throttled: string;
     generic: string;
   };
 }
@@ -41,7 +42,15 @@ export function LoginForm({ nextUrl, initialError, labels }: Props) {
     });
 
     if (result?.error) {
-      setError(result.error.includes('SUSPENDED') ? labels.suspended : labels.invalid);
+      // The throttle gets its own message. "Wrong email or password" repeated
+      // at somebody who is actually locked out just makes them try harder.
+      setError(
+        result.error.includes('SUSPENDED')
+          ? labels.suspended
+          : result.error.includes('TOO_MANY')
+            ? labels.throttled
+            : labels.invalid,
+      );
       return;
     }
 
@@ -54,7 +63,12 @@ export function LoginForm({ nextUrl, initialError, labels }: Props) {
   }
 
   return (
-    <form onSubmit={onSubmit} className="space-y-4">
+    // `method="post"` matters even though the submit is handled in JS: before
+    // React hydrates, a form with no method submits as a GET and appends every
+    // field to the URL — putting the password into browser history, the
+    // referrer header, and the server's access log. POST keeps it in a body
+    // that simply goes nowhere.
+    <form onSubmit={onSubmit} method="post" className="space-y-4">
       {error ? (
         <Alert variant="destructive">
           <AlertCircle />
